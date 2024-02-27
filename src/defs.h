@@ -8,6 +8,7 @@
 #include <math.h>
 #include <complex.h>
 #include <string.h>
+#include <dirent.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_image.h>
 #include <SDL3/SDL_ttf.h>
@@ -49,6 +50,7 @@ typedef uint64_t u64;
 typedef float    f32;
 typedef double   f64;
 typedef float _Complex cmplx; 
+typedef struct dirent* de;
 
 typedef struct {
     i32 x;
@@ -64,7 +66,7 @@ typedef enum {
     PB_PLAYING = 1,
     PB_PAUSED = 2,
     PB_LOOPING = 4,
-    END,
+    PB_ENDED,
 } pb_state;
 
 typedef enum {

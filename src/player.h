@@ -32,12 +32,17 @@ f32 sawtooth_wave(f32 phase);
 f32 triangle_wave(f32 phase);
 void draw_wave(SDL_Renderer *renderer);
 void update_pb(ma_vars_t *ma_vars);
-void render_pb_progress_bar(SDL_Renderer *renderer, Mouse mouse, ma_vars_t *ma_vars);
+void render_pb(SDL_Renderer *renderer, Mouse mouse, ma_vars_t *ma_vars);
+void print_playlist();
 void print_pb_info(pb_info pb_info);
 void print_pb_state(pb_state pb_state);
 void print_frame(f32 frame, size_t itr);
 void print_frames(f32 frames[], size_t framesSize);
 void print_fft_frame(cmplx fftFrame, size_t itr);
 void print_fft_frames(cmplx fftFrames[], size_t framesSize);
+
+void restart_pb();
+
+bool check_file_mp3(const char* file);
 
 #endif // PLAYER_H

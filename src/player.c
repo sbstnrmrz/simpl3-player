@@ -1,7 +1,7 @@
 #include "player.h"
-#include "SDL3/SDL_image.h"
 #include "defs.h"
 #include "ui.h"
+#include <dirent.h>
 
 //tsoding video fft. min: 1:39:31
 f32   *inSamples = NULL;
@@ -314,18 +314,12 @@ void init_ui(SDL_Renderer *renderer) {
                               NULL,
                               BOX_VISIBLE
                               ); 
-
-
-
-
-
 }
 
 void update_pb(ma_vars_t *ma_vars) {
 }
 
-void render_pb_progress_bar(SDL_Renderer *renderer, Mouse mouse, ma_vars_t *ma_vars) { 
-
+void render_pb(SDL_Renderer *renderer, Mouse mouse, ma_vars_t *ma_vars) { 
     slider->rect.x = (progress_bar->rect.x + ((f32)progress_bar_w/ma_vars->pb_info.total_frames) * ma_vars->pb_info.cursor) - 16;
     slider->rect.y = progress_bar->rect.y - 10;
     
@@ -341,18 +335,18 @@ void render_pb_progress_bar(SDL_Renderer *renderer, Mouse mouse, ma_vars_t *ma_v
     }
 
     if (slider->state & BOX_HOVERED) {
-        SDL_SetTextureColorMod(button_textures[BUTTON_SLIDER], 50, 50, 50);
+        SDL_SetTextureColorMod(button_textures[BUTTON_SLIDER], 150, 150, 150);
     } else {
         SDL_SetTextureColorMod(button_textures[BUTTON_SLIDER], 255, 255, 255);
     }
 
     if (next_song_button->state & BOX_HOVERED) {
-        SDL_SetTextureColorMod(button_textures[BUTTON_NEXT_SONG], 50, 50, 50);
+        SDL_SetTextureColorMod(button_textures[BUTTON_NEXT_SONG], 150, 150, 150);
     } else {
         SDL_SetTextureColorMod(button_textures[BUTTON_NEXT_SONG], 255, 255, 255);
     }
     if (prev_song_button->state & BOX_HOVERED) {
-        SDL_SetTextureColorMod(button_textures[BUTTON_PREV_SONG], 50, 50, 50);
+        SDL_SetTextureColorMod(button_textures[BUTTON_PREV_SONG], 150, 150, 150);
     } else {
         SDL_SetTextureColorMod(button_textures[BUTTON_PREV_SONG], 255, 255, 255);
     }
@@ -365,12 +359,11 @@ void render_pb_progress_bar(SDL_Renderer *renderer, Mouse mouse, ma_vars_t *ma_v
                 ma_vars->pb_state |= PB_LOOPING;
             }
         }
-        SDL_SetTextureColorMod(button_textures[BUTTON_LOOP], 50, 50, 50);
+        SDL_SetTextureColorMod(button_textures[BUTTON_LOOP], 150, 150, 150);
     } else {
         SDL_SetTextureColorMod(button_textures[BUTTON_LOOP], 255, 255, 255);
     }
 
-    SDL_Texture *texture = NULL; 
     if (ma_vars->pb_state & PB_PLAYING) {
         play_button->texture = button_textures[BUTTON_PAUSE];
     }
@@ -388,24 +381,11 @@ void render_pb_progress_bar(SDL_Renderer *renderer, Mouse mouse, ma_vars_t *ma_v
                 ma_vars->pb_state |= PB_PLAYING;
             }
         }
-        SDL_SetTextureColorMod(play_button->texture, 50, 50, 50);
+        SDL_SetTextureColorMod(play_button->texture, 150, 150, 150);
     } else {
         SDL_SetTextureColorMod(play_button->texture, 255, 255, 255);
     }
 
-//  SDL_SetRenderDrawColor(renderer, 
-//                         progress_bar.color.r, 
-//                         progress_bar.color.g, 
-//                         progress_bar.color.b, 
-//                         progress_bar.color.a);
-//  SDL_RenderFillRect(renderer, &progress_bar.rect);
-//  SDL_RenderRect(renderer, &progress_bar.rect);
-
-//  SDL_RenderTexture(renderer, texture, NULL, &play_button);
-//  SDL_RenderTexture(renderer, button_textures[BUTTON_SLIDER], NULL, &slider);
-//  SDL_RenderTexture(renderer, button_textures[BUTTON_PREV_SONG], NULL, &prev_button);
-//  SDL_RenderTexture(renderer, button_textures[BUTTON_NEXT_SONG], NULL, &next_button);
-//  SDL_RenderTexture(renderer, button_textures[BUTTON_LOOP], NULL, &loop_button);
 }
 
 void draw_wave(SDL_Renderer *renderer) {
@@ -486,6 +466,37 @@ void print_fft_frames(cmplx frames[], size_t framesSize) {
     for (size_t i = 0; i < framesSize; i++) {
         printf("frame[L, %zu]: REAL: %f, IMAG: %f\n", i, crealf(fft_out[i]), cimagf(fft_out[i]));
     }
+}
+
+void print_playlist() {
+    de de = {0}; 
+
+    DIR *dir = opendir("assets/music/");
+    if (dir == NULL) {
+        fprintf(stderr, "Could not open directory\n");
+        exit(1);
+    }
+
+    de = readdir(dir);
+    size_t cnt = 0;
+    while (de != NULL) {
+        if (de->d_type == DT_REG) {
+            if (check_file_mp3(de->d_name)) {
+                printf("File %zu: %s\n", cnt, de->d_name);
+                cnt++;
+            }
+        }
+        de = readdir(dir);
+    }
+}
+
+bool check_file_mp3(const char *file) {
+    size_t len = strlen(file);
+    if (!strcasecmp(file+(len-3), "mp3")) {
+        return true;
+    }
+
+    return false;
 }
 
 void print_pb_info(pb_info pb_info) {

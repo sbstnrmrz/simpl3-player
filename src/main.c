@@ -201,7 +201,7 @@ void render() {
     if (ma_vars.pb_state == PB_PLAYING) {
 
     }
-    render_pb_progress_bar(engine.renderer, engine.mouse, &ma_vars);
+    render_pb(engine.renderer, engine.mouse, &ma_vars);
     render_box_arr(engine.renderer);
 
     SDL_RenderPresent(engine.renderer);
@@ -320,6 +320,22 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     printf("Device started\n");
+    print_playlist();
+
+// PRUBA
+    ma_device_stop(&ma_vars.device);
+
+    if (ma_decoder_init_file("assets/music/MF DOOM - Doomsday.mp3", &ma_vars.decoderConfig, &ma_vars.decoder) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to open %s file.\n", argv[2]);
+        exit(1);
+    }
+    ma_decoder_get_length_in_pcm_frames(&ma_vars.decoder, &ma_vars.pb_info.total_frames);
+    ma_vars.pb_info.sample_rate = ma_vars.decoder.outputSampleRate;
+    ma_vars.pb_info.channels = ma_vars.decoder.outputChannels;
+    ma_vars.pb_info.last_cursor = 0;
+// PRUEBA
+    
+    ma_device_start(&ma_vars.device);
 
     init_sdl("siMPl3 player", WIN_WIDTH, WIN_HEIGHT, 0);
     init_ui(engine.renderer);
