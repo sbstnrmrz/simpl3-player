@@ -1,8 +1,6 @@
 #include "player.h"
 #include "defs.h"
 #include "ui.h"
-#include <dirent.h>
-#include <string.h>
 
 //tsoding video fft. min: 1:39:31
 f32   *inSamples = NULL;
@@ -11,14 +9,13 @@ f32   *in = NULL;
 cmplx *fft_out = NULL;
 cmplx *fft_out_woz = NULL;
 size_t frames_size = 0;
-SDL_Texture *button_textures[6] = {0};
-SDL_FRect *button_rects[6] = {0};
+SDL_Texture *button_textures[8] = {0};
 
 box_t *prev_song_button = NULL;
 box_t *next_song_button = NULL;
 box_t *progress_bar = NULL;
 box_t *play_button = NULL;
-box_t *loop_button = NULL;
+box_t *pb_state_button = NULL;
 box_t *slider = NULL;
 
 f32 progress_bar_h = 20;
@@ -33,18 +30,19 @@ void pb_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint3
     if (ma_vars->pb_state & PB_PLAYING) {
         err = ma_decoder_read_pcm_frames(&ma_vars->decoder, pOutput, frameCount, NULL);
 
-        if (err == MA_AT_END) {
-            if (ma_vars->pb_state & PB_LOOPING) {
-                ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, 0);
-            } else {
-                printf("Playback has finished!\n"); 
-                exit(1);
-            }
-        }
-        else if (err != MA_SUCCESS) {
-            fprintf(stderr, "An error has ocurred. ma_result: %d\n", err);
-            exit(1);
-        }
+//      if (err == MA_AT_END) {
+//          if (ma_vars->pb_state & PB_LOOPING) {
+//              ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, 0);
+//          }
+//          if (ma_vars->pb_state & PB_ONCE) {
+//              printf("Playback has finished!\n"); 
+//              exit(1);
+//          }
+//      }
+//      else if (err != MA_SUCCESS) {
+//          fprintf(stderr, "An error has ocurred. ma_result: %d\n", err);
+//          exit(1);
+//      }
 
 //      out = (f32*)pOutput;
 //      fft_out = (cmplx*)malloc(sizeof(cmplx) * frameCount);
@@ -227,7 +225,9 @@ void init_ui(SDL_Renderer *renderer) {
     button_textures[BUTTON_NEXT_SONG] = IMG_LoadTexture(renderer, "assets/buttons/next.png");
     button_textures[BUTTON_PREV_SONG] = IMG_LoadTexture(renderer, "assets/buttons/prev.png");
     button_textures[BUTTON_SLIDER] = IMG_LoadTexture(renderer, "assets/buttons/slider.png");
+    button_textures[BUTTON_ONCE] = IMG_LoadTexture(renderer, "assets/buttons/once.png");
     button_textures[BUTTON_LOOP] = IMG_LoadTexture(renderer, "assets/buttons/loop.png");
+    button_textures[BUTTON_SHUFFLE] = IMG_LoadTexture(renderer, "assets/buttons/shuffle.png");
 
     progress_bar = create_box(renderer, 
                               (SDL_FRect) {
@@ -303,7 +303,7 @@ void init_ui(SDL_Renderer *renderer) {
                               BOX_VISIBLE
                               ); 
 
-    loop_button = create_box(renderer, 
+    pb_state_button = create_box(renderer, 
                               (SDL_FRect) {
                                 .x = ((f32)WIN_WIDTH/2) - 16,
                                 .y = (f32)WIN_HEIGHT/2 + 96,
@@ -311,7 +311,7 @@ void init_ui(SDL_Renderer *renderer) {
                                 .h = 32,
                               },
                               WHITE,
-                              button_textures[BUTTON_LOOP],
+                              button_textures[BUTTON_ONCE],
                               NULL,
                               WHITE,
                               NULL,
@@ -322,8 +322,26 @@ void init_ui(SDL_Renderer *renderer) {
     print_playlist(test_pl);
 }
 
-void update_pb(ma_vars_t *ma_vars) {
+void init_player(ma_vars_t *ma_vars) {
+    ma_vars->pb_state |= PB_ONCE;
+}
 
+void update_pb(ma_vars_t *ma_vars) {
+    if (err == MA_AT_END) {
+        if (ma_vars->pb_state & PB_LOOPING) {
+            ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, 0);
+        }
+        if (ma_vars->pb_state & PB_ONCE) {
+            printf("Playback has finished!\n"); 
+            exit(1);
+        }
+        if (ma_vars->pb_state & PB_SHUFFLE) {
+            play_mp3(test_pl.mp3_list[rand()%test_pl.mp3_list_size], ma_vars);
+        }
+    } else if (err != MA_SUCCESS) {
+        fprintf(stderr, "An error has ocurred. ma_result: %d\n", err);
+        exit(1);
+    }
 }
 
 void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) { 
@@ -376,17 +394,26 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
         SDL_SetTextureColorMod(button_textures[BUTTON_PREV_SONG], 255, 255, 255);
     }
 
-    if (loop_button->state & BOX_HOVERED) {
+    if (pb_state_button->state & BOX_HOVERED) {
         if (mouse_clicked(mouse)) {
-            if (ma_vars->pb_state & PB_LOOPING) {
-                ma_vars->pb_state &= ~PB_LOOPING;
-            } else {
+            if (ma_vars->pb_state & PB_ONCE) {
+                ma_vars->pb_state &= ~PB_ONCE;
                 ma_vars->pb_state |= PB_LOOPING;
+                pb_state_button->texture = button_textures[BUTTON_LOOP];
+            } else if (ma_vars->pb_state & PB_SHUFFLE) {
+                ma_vars->pb_state &= ~PB_SHUFFLE;
+                ma_vars->pb_state |= PB_ONCE;
+                pb_state_button->texture = button_textures[BUTTON_ONCE];
+            } else if (ma_vars->pb_state & PB_LOOPING) {
+                ma_vars->pb_state &= ~PB_LOOPING;
+                ma_vars->pb_state |= PB_SHUFFLE;
+                pb_state_button->texture = button_textures[BUTTON_SHUFFLE];
             }
+
         }
-        SDL_SetTextureColorMod(button_textures[BUTTON_LOOP], 150, 150, 150);
+        SDL_SetTextureColorMod(pb_state_button->texture, 150, 150, 150);
     } else {
-        SDL_SetTextureColorMod(button_textures[BUTTON_LOOP], 255, 255, 255);
+        SDL_SetTextureColorMod(pb_state_button->texture, 255, 255, 255);
     }
 
     if (ma_vars->pb_state & PB_PLAYING) {
@@ -619,7 +646,9 @@ void print_pb_state(pb_state pb_state) {
     printf("[PLAYBACK STATE]\n");
     printf("  Playing: %d\n", pb_state&PB_PLAYING);
     printf("  Paused: %d\n", pb_state&PB_PAUSED);
-    printf("  Looping: %d\n", pb_state & (PB_LOOPING));
+    printf("  Once: %d\n", pb_state&PB_ONCE);
+    printf("  Loop: %d\n", pb_state&PB_LOOPING);
+    printf("  Shuffle: %d\n", pb_state&PB_SHUFFLE);
 
     printf("\n");
 }

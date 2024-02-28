@@ -328,6 +328,7 @@ int main(int argc, char *argv[]) {
     
     init_sdl("siMPl3 player", WIN_WIDTH, WIN_HEIGHT, 0);
     init_ui(engine.renderer);
+    init_player(&ma_vars);
 
 	while(engine.running) {
 		handle_events();

@@ -65,7 +65,6 @@ bool check_mouse_rect_collision(mouse_t mouse, SDL_FRect rect);
 void mouse_update(SDL_Event event, mouse_t *mouse);
 bool mouse_clicked(mouse_t mouse);
 SDL_Texture *load_svg(SDL_Renderer *renderer, const char* svg_file);
-SDL_Texture *load_png(SDL_Renderer *renderer, const char *png_file);
 
 void update_animations(SDL_Renderer *renderer);
 void anim_expand_box(box_t *box);

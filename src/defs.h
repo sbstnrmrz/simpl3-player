@@ -65,7 +65,9 @@ typedef struct {
 typedef enum {
     PB_PLAYING = 1,
     PB_PAUSED = 2,
-    PB_LOOPING = 4,
+    PB_ONCE = 4,
+    PB_LOOPING = 8,
+    PB_SHUFFLE = 16,
     PB_ENDED,
 } pb_state;
 
@@ -130,7 +132,10 @@ typedef enum {
     BUTTON_NEXT_SONG = 2,
     BUTTON_PREV_SONG = 3,
     BUTTON_SLIDER = 4,
-    BUTTON_LOOP = 5,
+    BUTTON_ONCE = 5,
+    BUTTON_LOOP = 6,
+    BUTTON_SHUFFLE = 7,
+
 } button_id;
 
 #endif // DEFS_H
