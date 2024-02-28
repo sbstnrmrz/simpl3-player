@@ -38,13 +38,13 @@ box_t *create_box(SDL_Renderer *renderer,
                   TTF_Font *font, 
                   u32 flags);
 void init_ui(SDL_Renderer *renderer);
-void update_box_arr(Mouse mouse);
+void update_box_arr(mouse_t mouse);
 void render_box_arr(SDL_Renderer *renderer);
 void new_font_texture(SDL_Renderer *renderer, box_t *box, char *new_text);
 SDL_Texture *create_font_texture(SDL_Renderer *renderer, TTF_Font* font, const char* text, SDL_Color text_color);
-bool check_mouse_rect_collision(Mouse mouse, SDL_FRect rect);
-void mouse_update(SDL_Event event, Mouse *mouse);
-bool mouse_clicked(Mouse mouse);
+bool check_mouse_rect_collision(mouse_t mouse, SDL_FRect rect);
+void mouse_update(SDL_Event event, mouse_t *mouse);
+bool mouse_clicked(mouse_t mouse);
 SDL_Texture *load_svg(SDL_Renderer *renderer, const char* svg_file);
 SDL_Texture *load_png(SDL_Renderer *renderer, const char *png_file);
 

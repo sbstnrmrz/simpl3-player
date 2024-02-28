@@ -64,7 +64,7 @@ box_t *create_box(SDL_Renderer *renderer,
     return result;
 }
 
-void update_box_arr(Mouse mouse) {
+void update_box_arr(mouse_t mouse) {
     for (size_t i = 0; i < box_arr_size; i++) {
         if (box_arr[i]->state & BOX_VISIBLE) {
             if (check_mouse_rect_collision(mouse, box_arr[i]->rect)) {
@@ -116,7 +116,7 @@ void render_box_arr(SDL_Renderer *renderer) {
 }
 
 // check if mouse is inside passed rect
-bool check_mouse_rect_collision(Mouse mouse, SDL_FRect rect) {
+bool check_mouse_rect_collision(mouse_t mouse, SDL_FRect rect) {
     if ((mouse.pos.x >= rect.x && mouse.pos.x <= rect.x + rect.w) &&
         (mouse.pos.y >= rect.y && mouse.pos.y <= rect.y + rect.h)) 
     {        
@@ -127,7 +127,7 @@ bool check_mouse_rect_collision(Mouse mouse, SDL_FRect rect) {
 
 }
 
-void mouse_update(SDL_Event event, Mouse *mouse) {
+void mouse_update(SDL_Event event, mouse_t *mouse) {
     if (mouse->state & M_RELEASED) {
         mouse->button = 0;
     }
@@ -151,7 +151,7 @@ void mouse_update(SDL_Event event, Mouse *mouse) {
 }
 
 // check if mouse was clicked
-bool mouse_clicked(Mouse mouse) {
+bool mouse_clicked(mouse_t mouse) {
     if (mouse.state & M_RELEASED && mouse.button & MB_LEFT_CLICK) {
         return true;
     } else {

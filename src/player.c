@@ -326,10 +326,10 @@ void update_pb(ma_vars_t *ma_vars) {
 
 }
 
-void render_pb(SDL_Renderer *renderer, Mouse mouse, ma_vars_t *ma_vars) { 
-
+void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) { 
     slider->rect.x = (progress_bar->rect.x + ((f32)progress_bar_w/ma_vars->pb_info.total_frames) * ma_vars->pb_info.cursor) - 16;
     slider->rect.y = progress_bar->rect.y - 10;
+
     if (progress_bar->state & BOX_HOVERED) {
         if (mouse_clicked(mouse)) {
             ma_vars->pb_state &= ~PB_PLAYING;
@@ -489,13 +489,18 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     ma_vars->deviceConfig.playback.channels = ma_vars->decoder.outputChannels;
     ma_vars->deviceConfig.sampleRate        = ma_vars->decoder.outputSampleRate;
     ma_decoder_get_length_in_pcm_frames(&ma_vars->decoder, &ma_vars->pb_info.total_frames);
+
+    if (ma_vars->decoder.outputFormat == ma_format_f32) {
+        ma_vars->pb_info.format = "float32";
+    }
+    if (ma_vars->decoder.outputFormat == ma_format_s16) {
+        ma_vars->pb_info.format = "int16";
+    }
+
+    ma_vars->pb_info.filename = mp3.name;
     ma_vars->pb_info.sample_rate = ma_vars->decoder.outputSampleRate;
     ma_vars->pb_info.channels = ma_vars->decoder.outputChannels;
     ma_vars->pb_info.last_cursor = 0;
-
-//  if (ma_vars->decoder.outputFormat == ma_format_f32) {
-//      ma_vars->pb_info.format = "float32";
-//  }
 
     ma_vars->pb_state &= ~PB_PAUSED;
     ma_vars->pb_state |= PB_PLAYING;
@@ -592,8 +597,6 @@ void print_fft_frames(cmplx frames[], size_t framesSize) {
     }
 }
 
-
-
 void print_pb_info(pb_info pb_info) {
     u32 frames_to_sec = pb_info.cursor / SAMPLE_RATE;
     u32 sec =  frames_to_sec % 60;
@@ -601,6 +604,7 @@ void print_pb_info(pb_info pb_info) {
     u32 hr = frames_to_sec / 3600;
 
     printf("[PLAYBACK INFO]\n");
+    printf("  File: %s\n", pb_info.filename);
     printf("  Format: %s\n", pb_info.format);
     printf("  Sample rate: %uhz\n", pb_info.sample_rate);
     printf("  Channels: %u\n", pb_info.channels);

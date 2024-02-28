@@ -7,7 +7,7 @@
 
 struct {
     bool          running;
-    Mouse         mouse;
+    mouse_t       mouse;
     SDL_Window   *window;
     SDL_Renderer *renderer;
 } engine;
@@ -218,8 +218,8 @@ void uninit_sdl() {
 
 void debug() {
 //  print_mouse_info(engine.mouse);
-//  print_pb_info(ma_vars.pb_info);
-//  print_pb_state(ma_vars.pb_state);
+    print_pb_info(ma_vars.pb_info);
+    print_pb_state(ma_vars.pb_state);
 
 }
 

@@ -73,7 +73,7 @@ typedef enum {
     REC_RECORDING,
     REC_PAUSED,
     REC_ENDED,
-} capture_state;
+} rec_state;
 
 typedef enum {
     ERROR_NOCOMMAND = -2,
@@ -105,10 +105,10 @@ typedef struct {
     vecf2d_t       pos;
     mouse_button   button;
     mouse_state    state;
-} Mouse;
+} mouse_t;
 
 typedef struct {
-    const char* filename;
+    char* filename;
     const char* format;
     u32 sample_rate;
     u32 channels;
@@ -133,9 +133,9 @@ typedef struct {
     ma_device         device;
     ma_device_config  deviceConfig;
     pb_info           pb_info;
-    rec_info          rec_info;
     pb_state          pb_state;
-    capture_state     rec_state;
+    rec_info          rec_info;
+    rec_state         rec_state;
 } ma_vars_t;
 
 typedef enum {
