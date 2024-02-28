@@ -1,4 +1,5 @@
 #include "player.h"
+#include "clock.h"
 #include "defs.h"
 #include "ui.h"
 
@@ -512,8 +513,7 @@ void draw_wave(SDL_Renderer *renderer) {
 
 void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     ma_result err;
-    ma_vars->pb_state &= ~PB_PLAYING;
-    ma_vars->pb_state |= PB_PAUSED;
+    pause_pb(&ma_vars->pb_state);
 
     char *str = NULL;
     str = strcat(mp3.dir, mp3.filename);
@@ -596,7 +596,6 @@ playlist_t create_playlist(const char *dir_name) {
         de = readdir(dir);
     }
     closedir(dir);
-    printf("MEMORY: %p\n", result.mp3_list);
 
     return result;
 }
@@ -629,27 +628,22 @@ void print_fft_frames(cmplx frames[], size_t framesSize) {
 }
 
 void print_pb_info(pb_info pb_info) {
-    u32 frames_to_sec = pb_info.cursor / SAMPLE_RATE;
-    u32 total_frames_to_secs = pb_info.current_mp3.frames / SAMPLE_RATE;
-
-    u32 sec =  frames_to_sec % 60;
-    u32 total_secs = total_frames_to_secs % 60;
-    u32 min = frames_to_sec / 60;
-    u32 total_mins = total_frames_to_secs / 60;
-    u32 hr = frames_to_sec / 3600;
-    u32 total_hrs = total_frames_to_secs / 3600;
+    u32 cursor_to_ms = pb_info.cursor / SAMPLE_RATE;
+    u32 frames_to_ms = pb_info.current_mp3.frames / SAMPLE_RATE;
 
     printf("[PLAYBACK INFO]\n");
     printf("  File: %s\n", pb_info.current_mp3.filename);
     printf("  Format: %s\n", pb_info.current_mp3.format);
     printf("  Sample rate: %uhz\n", pb_info.current_mp3.sample_rate);
     printf("  Channels: %u\n", pb_info.current_mp3.channels);
-    printf("  Duration: %02u:%02u:%02u\n", total_hrs, total_mins, total_secs);
-    printf("  Frames cursor: %llu\n", pb_info.cursor);
+    printf("  Duration: ");
+    print_time_24hrs(frames_to_ms);
+    printf("\n  Frames cursor: %llu\n", pb_info.cursor);
     printf("  Last frames cursor: %llu\n", pb_info.last_cursor);
-    printf("  Progress: %02u:%02u:%02u\n", hr, min, sec);
+    printf("  Progress: "); 
+    print_time_24hrs(cursor_to_ms);
 
-    printf("\n");
+    printf("\n\n");
 }
 
 void print_pb_state(pb_state pb_state) {
