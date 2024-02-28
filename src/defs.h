@@ -95,7 +95,6 @@ typedef struct {
     u32 sample_rate;
     u8 channels;
     u64 frames;
-//  u64 frames; 
 } mp3_t;
 
 typedef struct {
@@ -103,16 +102,6 @@ typedef struct {
     u64 cursor;
     u64 last_cursor;
 } pb_info;
-
-//typedef struct {
-//    char filename[128];
-//    const char* format;
-//    u32 sample_rate;
-//    u32 channels;
-//    u64 total_frames;
-//    u64 cursor;
-//    u64 last_cursor;
-//} pb_info;
 
 typedef struct {
     const char *filename;
@@ -143,9 +132,5 @@ typedef enum {
     BUTTON_SLIDER = 4,
     BUTTON_LOOP = 5,
 } button_id;
-
-void init_ui(SDL_Renderer *renderer);
-
-SDL_Texture *load_texture(SDL_Renderer *renderer, const char *file);
 
 #endif // DEFS_H
