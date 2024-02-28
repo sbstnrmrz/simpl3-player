@@ -104,10 +104,10 @@ void print_parse_info(parse_result result) {
 }
 
 void print_devices(ma_context *context) {
-    ma_device_info *output_devs;
-    u32 output_devs_count;
-    ma_device_info *input_devs;
-    u32 input_devs_count;
+    ma_device_info *output_devs = NULL;
+    u32 output_devs_count = 0;
+    ma_device_info *input_devs = NULL;
+    u32 input_devs_count = 0;
 
     if (ma_context_get_devices(context, &output_devs, &output_devs_count, &input_devs, &input_devs_count)) {
         fprintf(stderr, "Failed to get devices.\n");

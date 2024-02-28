@@ -512,6 +512,15 @@ bool check_file_mp3(const char *file) {
     return false;
 }
 
+bool check_file_wav(const char *file) {
+    size_t len = strlen(file);
+    if (!strcasecmp(file+(len-3), "wav")) {
+        return true;
+    }
+
+    return false;
+}
+
 playlist_t create_playlist(const char *dir_name) {
     playlist_t result = {
         .name = "playlist",

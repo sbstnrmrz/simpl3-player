@@ -59,6 +59,7 @@ void print_fft_frames(cmplx fftFrames[], size_t framesSize);
 void restart_pb();
 
 bool check_file_mp3(const char* file);
+bool check_file_wav(const char* file);
 playlist_t create_playlist(const char *dir);
 
 #endif // PLAYER_H
