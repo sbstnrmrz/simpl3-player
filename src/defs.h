@@ -134,7 +134,7 @@ typedef struct {
     ma_device_config  deviceConfig;
     pb_info           pb_info;
     rec_info          rec_info;
-    pb_state    pb_state;
+    pb_state          pb_state;
     capture_state     rec_state;
 } ma_vars_t;
 

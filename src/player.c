@@ -2,6 +2,7 @@
 #include "defs.h"
 #include "ui.h"
 #include <dirent.h>
+#include <string.h>
 
 //tsoding video fft. min: 1:39:31
 f32   *inSamples = NULL;
@@ -22,6 +23,8 @@ box_t *slider = NULL;
 
 f32 progress_bar_h = 20;
 f32 progress_bar_w = 300;
+
+playlist_t test_pl = {0};
 
 ma_result err;
 
@@ -243,10 +246,10 @@ void init_ui(SDL_Renderer *renderer) {
 
     play_button = create_box(renderer, 
                               (SDL_FRect) {
-                            .w = 32,
-                            .h = 32,
-                            .x = ((f32)WIN_WIDTH/2) - 16,
-                            .y = (f32)WIN_HEIGHT/2 + 32,
+                                .w = 32,
+                                .h = 32,
+                                .x = ((f32)WIN_WIDTH/2) - 16,
+                                .y = (f32)WIN_HEIGHT/2 + 32,
                               },
                               WHITE,
                               button_textures[BUTTON_PLAY],
@@ -314,15 +317,19 @@ void init_ui(SDL_Renderer *renderer) {
                               NULL,
                               BOX_VISIBLE
                               ); 
+
+    test_pl = create_playlist("assets/music/"); 
+    print_playlist(test_pl);
 }
 
 void update_pb(ma_vars_t *ma_vars) {
+
 }
 
 void render_pb(SDL_Renderer *renderer, Mouse mouse, ma_vars_t *ma_vars) { 
+
     slider->rect.x = (progress_bar->rect.x + ((f32)progress_bar_w/ma_vars->pb_info.total_frames) * ma_vars->pb_info.cursor) - 16;
     slider->rect.y = progress_bar->rect.y - 10;
-    
     if (progress_bar->state & BOX_HOVERED) {
         if (mouse_clicked(mouse)) {
             ma_vars->pb_state &= ~PB_PLAYING;
@@ -341,11 +348,29 @@ void render_pb(SDL_Renderer *renderer, Mouse mouse, ma_vars_t *ma_vars) {
     }
 
     if (next_song_button->state & BOX_HOVERED) {
+        if (mouse_clicked(mouse)) {    
+            if (test_pl.current_mp3 < 4) {
+                test_pl.current_mp3++;
+            } else {
+                test_pl.current_mp3 = 0;
+            }
+            play_mp3(test_pl.mp3_list[test_pl.current_mp3], ma_vars);
+        }
+
+
         SDL_SetTextureColorMod(button_textures[BUTTON_NEXT_SONG], 150, 150, 150);
     } else {
         SDL_SetTextureColorMod(button_textures[BUTTON_NEXT_SONG], 255, 255, 255);
     }
     if (prev_song_button->state & BOX_HOVERED) {
+        if (mouse_clicked(mouse)) {    
+            if (test_pl.current_mp3 > 0) {
+                test_pl.current_mp3--;
+            } else {
+                test_pl.current_mp3 = test_pl.mp3_list_size-1;
+            }
+            play_mp3(test_pl.mp3_list[test_pl.current_mp3], ma_vars);
+        }
         SDL_SetTextureColorMod(button_textures[BUTTON_PREV_SONG], 150, 150, 150);
     } else {
         SDL_SetTextureColorMod(button_textures[BUTTON_PREV_SONG], 255, 255, 255);
@@ -448,6 +473,96 @@ void draw_wave(SDL_Renderer *renderer) {
     
 }
 
+void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
+    ma_result err;
+    ma_vars->pb_state &= ~PB_PLAYING;
+    ma_vars->pb_state |= PB_PAUSED;
+
+    err = ma_decoder_init_file(mp3.name, &ma_vars->decoderConfig, &ma_vars->decoder); 
+
+    if (err != MA_SUCCESS) {
+        fprintf(stderr, "Failed to open '%s' mp3 file. MA_ERROR: %d\n", mp3.name, err);
+        exit(1);
+    }
+
+    ma_vars->deviceConfig.playback.format   = ma_vars->decoder.outputFormat;
+    ma_vars->deviceConfig.playback.channels = ma_vars->decoder.outputChannels;
+    ma_vars->deviceConfig.sampleRate        = ma_vars->decoder.outputSampleRate;
+    ma_decoder_get_length_in_pcm_frames(&ma_vars->decoder, &ma_vars->pb_info.total_frames);
+    ma_vars->pb_info.sample_rate = ma_vars->decoder.outputSampleRate;
+    ma_vars->pb_info.channels = ma_vars->decoder.outputChannels;
+    ma_vars->pb_info.last_cursor = 0;
+
+//  if (ma_vars->decoder.outputFormat == ma_format_f32) {
+//      ma_vars->pb_info.format = "float32";
+//  }
+
+    ma_vars->pb_state &= ~PB_PAUSED;
+    ma_vars->pb_state |= PB_PLAYING;
+}
+
+
+
+bool check_file_mp3(const char *file) {
+    size_t len = strlen(file);
+    if (!strcasecmp(file+(len-3), "mp3")) {
+        return true;
+    }
+
+    return false;
+}
+
+playlist_t create_playlist(const char *dir_name) {
+    playlist_t result = {
+        .name = "playlist",
+        .dir = dir_name,
+        .mp3_list = NULL,
+        .mp3_list_size = 0,
+        .current_mp3 = 0,
+    };
+ 
+    DIR *dir = opendir(dir_name);
+    if (dir == NULL) {
+        fprintf(stderr, "Could not open directory\n");
+    }
+
+    de de = {0};
+    
+    de = readdir(dir);
+    while (de != NULL) {
+        if (de->d_type == DT_REG) {
+            if (check_file_mp3(de->d_name)) {
+                char str1[100] = {0};
+                strcpy(str1, dir_name);
+                printf("str1: %s\n", str1);
+                char str2[100] = {0};
+                strcpy(str2, de->d_name);
+                printf("str2: %s\n", str2);
+                char str3[100] = {0};
+                strcpy(str3, strcat(str1, str2));
+                printf("str3: %s\n", str3);
+
+                result.mp3_list = realloc(result.mp3_list, sizeof(mp3_t) * (result.mp3_list_size+1));
+                strcpy(result.mp3_list[result.mp3_list_size].name, str3); 
+                printf("result %zu: %s\n", result.mp3_list_size, result.mp3_list[result.mp3_list_size].name);
+                result.mp3_list_size++;
+            }
+        }
+        de = readdir(dir);
+    }
+    closedir(dir);
+    printf("MEMORY: %p\n", result.mp3_list);
+
+    return result;
+}
+
+void print_playlist(playlist_t playlist) {
+    printf("[Playlist: %s]\n", playlist.name);
+    for (size_t i = 0; i < playlist.mp3_list_size; i++) {
+        printf("File %zu: %s\n", i, playlist.mp3_list[i].name);
+    }
+}
+
 void print_frame(f32 frame, size_t itr) {
     printf("frame[L, %zu]: %f\n", itr, frame);
 }
@@ -468,36 +583,7 @@ void print_fft_frames(cmplx frames[], size_t framesSize) {
     }
 }
 
-void print_playlist() {
-    de de = {0}; 
 
-    DIR *dir = opendir("assets/music/");
-    if (dir == NULL) {
-        fprintf(stderr, "Could not open directory\n");
-        exit(1);
-    }
-
-    de = readdir(dir);
-    size_t cnt = 0;
-    while (de != NULL) {
-        if (de->d_type == DT_REG) {
-            if (check_file_mp3(de->d_name)) {
-                printf("File %zu: %s\n", cnt, de->d_name);
-                cnt++;
-            }
-        }
-        de = readdir(dir);
-    }
-}
-
-bool check_file_mp3(const char *file) {
-    size_t len = strlen(file);
-    if (!strcasecmp(file+(len-3), "mp3")) {
-        return true;
-    }
-
-    return false;
-}
 
 void print_pb_info(pb_info pb_info) {
     u32 frames_to_sec = pb_info.cursor / SAMPLE_RATE;

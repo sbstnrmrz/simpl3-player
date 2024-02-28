@@ -188,8 +188,8 @@ void handle_events() {
 }
 
 void update() {
-//    update_pb(&ma_vars);
     update_box_arr(engine.mouse);
+    update_pb(&ma_vars);
 }
 
 void render() {
@@ -201,8 +201,9 @@ void render() {
     if (ma_vars.pb_state == PB_PLAYING) {
 
     }
-    render_pb(engine.renderer, engine.mouse, &ma_vars);
+
     render_box_arr(engine.renderer);
+    render_pb(engine.renderer, engine.mouse, &ma_vars);
 
     SDL_RenderPresent(engine.renderer);
 
@@ -223,6 +224,7 @@ void debug() {
 }
 
 int main(int argc, char *argv[]) {
+    srand(time(NULL));
     int parse = parse_args(argc, argv); 
 
     print_args(argc, argv);
@@ -231,31 +233,40 @@ int main(int argc, char *argv[]) {
     if (parse == PLAYBACK_WAV || parse == PLAYBACK_MP3 || parse == PLAYBACK_FLAC) {
         printf("Playback mode selected\n");
 
-        ma_vars.decoderConfig = ma_decoder_config_init(ma_format_f32, 2, SAMPLE_RATE); 
-        if (ma_decoder_init_file(argv[2], &ma_vars.decoderConfig, &ma_vars.decoder) != MA_SUCCESS) {
-            fprintf(stderr, "Failed to open %s file.\n", argv[2]);
-            exit(1);
-        }
-        ma_decoder_get_length_in_pcm_frames(&ma_vars.decoder, &ma_vars.pb_info.total_frames);
-        ma_vars.pb_info.sample_rate = ma_vars.decoder.outputSampleRate;
-        ma_vars.pb_info.channels = ma_vars.decoder.outputChannels;
-        ma_vars.pb_info.last_cursor = 0;
+        ma_vars.decoderConfig = ma_decoder_config_init(ma_format_f32, 2, 48000); 
 
-        if (ma_vars.decoder.outputFormat == ma_format_f32) {
-            ma_vars.pb_info.format = "float32";
-        }
+//      if (ma_vars.decoder.outputFormat == ma_format_f32) {
+//          ma_vars.pb_info.format = "float32";
+//      }
 
         ma_vars.deviceConfig = ma_device_config_init(ma_device_type_playback);
-        ma_vars.deviceConfig.playback.format   = ma_vars.decoder.outputFormat;
-        ma_vars.deviceConfig.playback.channels = ma_vars.decoder.outputChannels;
-        ma_vars.deviceConfig.sampleRate        = ma_vars.decoder.outputSampleRate;
         ma_vars.deviceConfig.dataCallback      = pb_callback;
         ma_vars.deviceConfig.pUserData         = &ma_vars;
+        
+        mp3_t test = {0};
+        strcpy(test.name, argv[2]);
+        play_mp3(test, &ma_vars);
 
-        printf("File: %s\n", argv[2]); 
+//      if (ma_decoder_init_file(argv[2], &ma_vars.decoderConfig, &ma_vars.decoder) != MA_SUCCESS) {
+//          fprintf(stderr, "Failed to open %s file.\n", argv[2]);
+//          exit(1);
+//      }
+//      ma_vars.deviceConfig.playback.format   = ma_vars.decoder.outputFormat;
+//      ma_vars.deviceConfig.playback.channels = ma_vars.decoder.outputChannels;
+//      ma_vars.deviceConfig.sampleRate        = ma_vars.decoder.outputSampleRate;
+//      ma_decoder_get_length_in_pcm_frames(&ma_vars.decoder, &ma_vars.pb_info.total_frames);
+//      ma_vars.pb_info.sample_rate = ma_vars.decoder.outputSampleRate;
+//      ma_vars.pb_info.channels = ma_vars.decoder.outputChannels;
+//      ma_vars.pb_info.last_cursor = 0;
+//      mp3_t test = {0};
+//      strcpy(test.name, argv[2]);
 
-        print_pb_file_info(argv[2], ma_vars.pb_info.total_frames, ma_vars.decoder.outputChannels, SAMPLE_RATE);
-        ma_vars.pb_state = PB_PLAYING;
+//      play_mp3(test, &ma_vars);
+
+//      printf("File: %s\n", argv[2]); 
+
+//      print_pb_file_info(argv[2], ma_vars.pb_info.total_frames, ma_vars.decoder.outputChannels, SAMPLE_RATE);
+//      ma_vars.pb_state |= PB_PLAYING;
     }
 
     if (parse == RECORD_DEFAULT || parse == RECORD_WAV) {
@@ -320,23 +331,24 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     printf("Device started\n");
-    print_playlist();
+
+    ma_device_start(&ma_vars.device);
+//  playlist_t play = create_playlist("assets/music/");
+//  print_playlist(play);
 
 // PRUBA
-    ma_device_stop(&ma_vars.device);
+//  ma_device_stop(&ma_vars.device);
 
-    if (ma_decoder_init_file("assets/music/MF DOOM - Doomsday.mp3", &ma_vars.decoderConfig, &ma_vars.decoder) != MA_SUCCESS) {
-        fprintf(stderr, "Failed to open %s file.\n", argv[2]);
-        exit(1);
-    }
-    ma_decoder_get_length_in_pcm_frames(&ma_vars.decoder, &ma_vars.pb_info.total_frames);
-    ma_vars.pb_info.sample_rate = ma_vars.decoder.outputSampleRate;
-    ma_vars.pb_info.channels = ma_vars.decoder.outputChannels;
-    ma_vars.pb_info.last_cursor = 0;
+//  if (ma_decoder_init_file("assets/music/MF DOOM - Doomsday.mp3", &ma_vars.decoderConfig, &ma_vars.decoder) != MA_SUCCESS) {
+//      fprintf(stderr, "Failed to open %s file.\n", argv[2]);
+//      exit(1);
+//  }
+//  ma_decoder_get_length_in_pcm_frames(&ma_vars.decoder, &ma_vars.pb_info.total_frames);
+//  ma_vars.pb_info.sample_rate = ma_vars.decoder.outputSampleRate;
+//  ma_vars.pb_info.channels = ma_vars.decoder.outputChannels;
+//  ma_vars.pb_info.last_cursor = 0;
 // PRUEBA
     
-    ma_device_start(&ma_vars.device);
-
     init_sdl("siMPl3 player", WIN_WIDTH, WIN_HEIGHT, 0);
     init_ui(engine.renderer);
 

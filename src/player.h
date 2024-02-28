@@ -11,6 +11,20 @@ typedef enum {
     TRIANGLE
 } waveType;
 
+typedef struct {
+    char name[100];
+//  u32 duration;
+//  u64 frames; 
+} mp3_t;
+
+typedef struct {
+    const char *name;
+    const char *dir;
+    mp3_t *mp3_list;
+    size_t mp3_list_size;
+    size_t current_mp3;
+} playlist_t;
+
 // Audio
 void rec_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount);
 void pb_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount);
@@ -33,7 +47,8 @@ f32 triangle_wave(f32 phase);
 void draw_wave(SDL_Renderer *renderer);
 void update_pb(ma_vars_t *ma_vars);
 void render_pb(SDL_Renderer *renderer, Mouse mouse, ma_vars_t *ma_vars);
-void print_playlist();
+void play_mp3(mp3_t mp3, ma_vars_t *ma_vars);
+void print_playlist(playlist_t playlist);
 void print_pb_info(pb_info pb_info);
 void print_pb_state(pb_state pb_state);
 void print_frame(f32 frame, size_t itr);
@@ -44,5 +59,6 @@ void print_fft_frames(cmplx fftFrames[], size_t framesSize);
 void restart_pb();
 
 bool check_file_mp3(const char* file);
+playlist_t create_playlist(const char *dir);
 
 #endif // PLAYER_H
