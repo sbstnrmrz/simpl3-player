@@ -327,14 +327,14 @@ void update_pb(ma_vars_t *ma_vars) {
 }
 
 void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) { 
-    slider->rect.x = (progress_bar->rect.x + ((f32)progress_bar_w/ma_vars->pb_info.total_frames) * ma_vars->pb_info.cursor) - 16;
+    slider->rect.x = (progress_bar->rect.x + ((f32)progress_bar_w/ma_vars->pb_info.current_mp3.frames) * ma_vars->pb_info.cursor) - 16;
     slider->rect.y = progress_bar->rect.y - 10;
 
     if (progress_bar->state & BOX_HOVERED) {
         if (mouse_clicked(mouse)) {
             ma_vars->pb_state &= ~PB_PLAYING;
             ma_vars->pb_state |= PB_PAUSED;
-            u64 pos = ((ma_vars->pb_info.total_frames * (mouse.pos.x - progress_bar->rect.x) )/progress_bar->rect.w);
+            u64 pos = ((ma_vars->pb_info.current_mp3.frames * (mouse.pos.x - progress_bar->rect.x) )/progress_bar->rect.w);
             ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, pos); 
             ma_vars->pb_state &= ~PB_PAUSED;
             ma_vars->pb_state |= PB_PLAYING;
@@ -478,28 +478,31 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     ma_vars->pb_state &= ~PB_PLAYING;
     ma_vars->pb_state |= PB_PAUSED;
 
-    err = ma_decoder_init_file(mp3.name, &ma_vars->decoderConfig, &ma_vars->decoder); 
+    char *str = NULL;
+    str = strcat(mp3.dir, mp3.filename);
+
+    err = ma_decoder_init_file(str, &ma_vars->decoderConfig, &ma_vars->decoder); 
 
     if (err != MA_SUCCESS) {
-        fprintf(stderr, "Failed to open '%s' mp3 file. MA_ERROR: %d\n", mp3.name, err);
+        fprintf(stderr, "Failed to open '%s' mp3 file. MA_ERROR: %d\n", mp3.filename, err);
         exit(1);
     }
 
     ma_vars->deviceConfig.playback.format   = ma_vars->decoder.outputFormat;
     ma_vars->deviceConfig.playback.channels = ma_vars->decoder.outputChannels;
     ma_vars->deviceConfig.sampleRate        = ma_vars->decoder.outputSampleRate;
-    ma_decoder_get_length_in_pcm_frames(&ma_vars->decoder, &ma_vars->pb_info.total_frames);
+    ma_decoder_get_length_in_pcm_frames(&ma_vars->decoder, &ma_vars->pb_info.current_mp3.frames);
 
     if (ma_vars->decoder.outputFormat == ma_format_f32) {
-        ma_vars->pb_info.format = "float32";
+        ma_vars->pb_info.current_mp3.format = "float32";
     }
     if (ma_vars->decoder.outputFormat == ma_format_s16) {
-        ma_vars->pb_info.format = "int16";
+        ma_vars->pb_info.current_mp3.format = "int16";
     }
 
-    ma_vars->pb_info.filename = mp3.name;
-    ma_vars->pb_info.sample_rate = ma_vars->decoder.outputSampleRate;
-    ma_vars->pb_info.channels = ma_vars->decoder.outputChannels;
+    strcpy(ma_vars->pb_info.current_mp3.filename, mp3.filename);
+    ma_vars->pb_info.current_mp3.sample_rate = ma_vars->decoder.outputSampleRate;
+    ma_vars->pb_info.current_mp3.channels = ma_vars->decoder.outputChannels;
     ma_vars->pb_info.last_cursor = 0;
 
     ma_vars->pb_state &= ~PB_PAUSED;
@@ -546,19 +549,10 @@ playlist_t create_playlist(const char *dir_name) {
     while (de != NULL) {
         if (de->d_type == DT_REG) {
             if (check_file_mp3(de->d_name)) {
-                char str1[100] = {0};
-                strcpy(str1, dir_name);
-                printf("str1: %s\n", str1);
-                char str2[100] = {0};
-                strcpy(str2, de->d_name);
-                printf("str2: %s\n", str2);
-                char str3[100] = {0};
-                strcpy(str3, strcat(str1, str2));
-                printf("str3: %s\n", str3);
-
                 result.mp3_list = realloc(result.mp3_list, sizeof(mp3_t) * (result.mp3_list_size+1));
-                strcpy(result.mp3_list[result.mp3_list_size].name, str3); 
-                printf("result %zu: %s\n", result.mp3_list_size, result.mp3_list[result.mp3_list_size].name);
+                strcpy(result.mp3_list[result.mp3_list_size].filename, de->d_name); 
+                strcpy(result.mp3_list[result.mp3_list_size].dir, dir_name);
+                printf("result %zu: %s\n", result.mp3_list_size, result.mp3_list[result.mp3_list_size].filename);
                 result.mp3_list_size++;
             }
         }
@@ -573,7 +567,7 @@ playlist_t create_playlist(const char *dir_name) {
 void print_playlist(playlist_t playlist) {
     printf("[Playlist: %s]\n", playlist.name);
     for (size_t i = 0; i < playlist.mp3_list_size; i++) {
-        printf("File %zu: %s\n", i, playlist.mp3_list[i].name);
+        printf("File %zu: %s\n", i, playlist.mp3_list[i].filename);
     }
 }
 
@@ -604,11 +598,11 @@ void print_pb_info(pb_info pb_info) {
     u32 hr = frames_to_sec / 3600;
 
     printf("[PLAYBACK INFO]\n");
-    printf("  File: %s\n", pb_info.filename);
-    printf("  Format: %s\n", pb_info.format);
-    printf("  Sample rate: %uhz\n", pb_info.sample_rate);
-    printf("  Channels: %u\n", pb_info.channels);
-    printf("  Duration: %f seconds\n", (f32)pb_info.total_frames/pb_info.sample_rate);
+    printf("  File: %s\n", pb_info.current_mp3.filename);
+    printf("  Format: %s\n", pb_info.current_mp3.format);
+    printf("  Sample rate: %uhz\n", pb_info.current_mp3.sample_rate);
+    printf("  Channels: %u\n", pb_info.current_mp3.channels);
+    printf("  Duration: %f seconds\n", (f32)pb_info.current_mp3.frames/pb_info.current_mp3.sample_rate);
     printf("  Frames cursor: %llu\n", pb_info.cursor);
     printf("  Last frames cursor: %llu\n", pb_info.last_cursor);
     printf("  Progress: %02u:%02u:%02u\n", hr, min, sec);

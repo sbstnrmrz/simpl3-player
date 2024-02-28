@@ -7,6 +7,25 @@
 #define DEFAULT_FONT TTF_OpenFont("UbuntuMono Nerd Font.ttf", 48)
 
 typedef enum {
+    MB_NONE         = 0,
+    MB_LEFT_CLICK   = 1,
+    MB_RIGHT_CLICK  = 2,
+    MB_MIDDLE_CLICK = 3,
+} mouse_button;
+
+typedef enum {
+    M_PRESSED = 1,
+    M_RELEASED = 2,
+    M_MOVED,
+} mouse_state;
+
+typedef struct {
+    vecf2d_t       pos;
+    mouse_button   button;
+    mouse_state    state;
+} mouse_t;
+
+typedef enum {
     BOX_NONE = 0,
     BOX_HOVERED = 1,
     BOX_VISIBLE = 2,

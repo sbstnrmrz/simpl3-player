@@ -88,34 +88,31 @@ typedef enum {
     PRINT_VERSION
 } parse_result;
 
-typedef enum {
-    MB_NONE         = 0,
-    MB_LEFT_CLICK   = 1,
-    MB_RIGHT_CLICK  = 2,
-    MB_MIDDLE_CLICK = 3,
-} mouse_button;
-
-typedef enum {
-    M_PRESSED = 1,
-    M_RELEASED = 2,
-    M_MOVED,
-} mouse_state;
-
 typedef struct {
-    vecf2d_t       pos;
-    mouse_button   button;
-    mouse_state    state;
-} mouse_t;
-
-typedef struct {
-    char* filename;
-    const char* format;
+    char filename[128];
+    char dir[128];
+    char *format;
     u32 sample_rate;
-    u32 channels;
-    u64 total_frames;
+    u8 channels;
+    u64 frames;
+//  u64 frames; 
+} mp3_t;
+
+typedef struct {
+    mp3_t current_mp3;
     u64 cursor;
     u64 last_cursor;
 } pb_info;
+
+//typedef struct {
+//    char filename[128];
+//    const char* format;
+//    u32 sample_rate;
+//    u32 channels;
+//    u64 total_frames;
+//    u64 cursor;
+//    u64 last_cursor;
+//} pb_info;
 
 typedef struct {
     const char *filename;

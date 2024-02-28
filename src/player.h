@@ -11,11 +11,7 @@ typedef enum {
     TRIANGLE
 } waveType;
 
-typedef struct {
-    char name[100];
-//  u32 duration;
-//  u64 frames; 
-} mp3_t;
+
 
 typedef struct {
     const char *name;

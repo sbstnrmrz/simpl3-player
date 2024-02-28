@@ -15,8 +15,9 @@ struct {
 Clock pressClock = {
     .start_ms = 0,
     .current_ms = 0,
-    .state = CLK_PAUSED};
-ma_vars_t ma_vars;
+    .state = CLK_PAUSED
+};
+ma_vars_t ma_vars = {0};
 
 void print_args(int argc, char *argv[]) {
     printf("argc: %d\n", argc);
@@ -235,38 +236,14 @@ int main(int argc, char *argv[]) {
 
         ma_vars.decoderConfig = ma_decoder_config_init(ma_format_f32, 2, 48000); 
 
-//      if (ma_vars.decoder.outputFormat == ma_format_f32) {
-//          ma_vars.pb_info.format = "float32";
-//      }
-
         ma_vars.deviceConfig = ma_device_config_init(ma_device_type_playback);
         ma_vars.deviceConfig.dataCallback      = pb_callback;
         ma_vars.deviceConfig.pUserData         = &ma_vars;
         
         mp3_t test = {0};
-        strcpy(test.name, argv[2]);
+        strcpy(test.filename, argv[2]);
         play_mp3(test, &ma_vars);
 
-//      if (ma_decoder_init_file(argv[2], &ma_vars.decoderConfig, &ma_vars.decoder) != MA_SUCCESS) {
-//          fprintf(stderr, "Failed to open %s file.\n", argv[2]);
-//          exit(1);
-//      }
-//      ma_vars.deviceConfig.playback.format   = ma_vars.decoder.outputFormat;
-//      ma_vars.deviceConfig.playback.channels = ma_vars.decoder.outputChannels;
-//      ma_vars.deviceConfig.sampleRate        = ma_vars.decoder.outputSampleRate;
-//      ma_decoder_get_length_in_pcm_frames(&ma_vars.decoder, &ma_vars.pb_info.total_frames);
-//      ma_vars.pb_info.sample_rate = ma_vars.decoder.outputSampleRate;
-//      ma_vars.pb_info.channels = ma_vars.decoder.outputChannels;
-//      ma_vars.pb_info.last_cursor = 0;
-//      mp3_t test = {0};
-//      strcpy(test.name, argv[2]);
-
-//      play_mp3(test, &ma_vars);
-
-//      printf("File: %s\n", argv[2]); 
-
-//      print_pb_file_info(argv[2], ma_vars.pb_info.total_frames, ma_vars.decoder.outputChannels, SAMPLE_RATE);
-//      ma_vars.pb_state |= PB_PLAYING;
     }
 
     if (parse == RECORD_DEFAULT || parse == RECORD_WAV) {
