@@ -326,17 +326,31 @@ void init_player(ma_vars_t *ma_vars) {
     ma_vars->pb_state |= PB_ONCE;
 }
 
+void pause_pb(pb_state *state) {
+    *state &= ~PB_PLAYING;
+    *state |= PB_PAUSED;
+}
+
+void unpause_pb(pb_state *state) {
+    *state &= ~PB_PAUSED;
+    *state |= PB_PLAYING;
+}
+
 void update_pb(ma_vars_t *ma_vars) {
     if (err == MA_AT_END) {
         if (ma_vars->pb_state & PB_LOOPING) {
+            pause_pb(&ma_vars->pb_state);
             ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, 0);
+            unpause_pb(&ma_vars->pb_state);
         }
         if (ma_vars->pb_state & PB_ONCE) {
             printf("Playback has finished!\n"); 
             exit(1);
         }
         if (ma_vars->pb_state & PB_SHUFFLE) {
+            pause_pb(&ma_vars->pb_state);
             play_mp3(test_pl.mp3_list[rand()%test_pl.mp3_list_size], ma_vars);
+            unpause_pb(&ma_vars->pb_state);
         }
     } else if (err != MA_SUCCESS) {
         fprintf(stderr, "An error has ocurred. ma_result: %d\n", err);
@@ -350,19 +364,17 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
 
     if (progress_bar->state & BOX_HOVERED) {
         if (mouse_clicked(mouse)) {
-            ma_vars->pb_state &= ~PB_PLAYING;
-            ma_vars->pb_state |= PB_PAUSED;
+            pause_pb(&ma_vars->pb_state);
             u64 pos = ((ma_vars->pb_info.current_mp3.frames * (mouse.pos.x - progress_bar->rect.x) )/progress_bar->rect.w);
             ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, pos); 
-            ma_vars->pb_state &= ~PB_PAUSED;
-            ma_vars->pb_state |= PB_PLAYING;
+            unpause_pb(&ma_vars->pb_state);
         } 
     }
 
     if (slider->state & BOX_HOVERED) {
-        SDL_SetTextureColorMod(button_textures[BUTTON_SLIDER], 150, 150, 150);
+        SDL_SetTextureColorMod(slider->texture, 150, 150, 150);
     } else {
-        SDL_SetTextureColorMod(button_textures[BUTTON_SLIDER], 255, 255, 255);
+        SDL_SetTextureColorMod(slider->texture, 255, 255, 255);
     }
 
     if (next_song_button->state & BOX_HOVERED) {
@@ -376,9 +388,9 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
         }
 
 
-        SDL_SetTextureColorMod(button_textures[BUTTON_NEXT_SONG], 150, 150, 150);
+        SDL_SetTextureColorMod(next_song_button->texture, 150, 150, 150);
     } else {
-        SDL_SetTextureColorMod(button_textures[BUTTON_NEXT_SONG], 255, 255, 255);
+        SDL_SetTextureColorMod(next_song_button->texture, 255, 255, 255);
     }
     if (prev_song_button->state & BOX_HOVERED) {
         if (mouse_clicked(mouse)) {    
@@ -389,9 +401,9 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
             }
             play_mp3(test_pl.mp3_list[test_pl.current_mp3], ma_vars);
         }
-        SDL_SetTextureColorMod(button_textures[BUTTON_PREV_SONG], 150, 150, 150);
+        SDL_SetTextureColorMod(prev_song_button->texture, 150, 150, 150);
     } else {
-        SDL_SetTextureColorMod(button_textures[BUTTON_PREV_SONG], 255, 255, 255);
+        SDL_SetTextureColorMod(prev_song_button->texture, 255, 255, 255);
     }
 
     if (pb_state_button->state & BOX_HOVERED) {
@@ -426,11 +438,9 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
     if (play_button->state & BOX_HOVERED) {
         if (mouse_clicked(mouse)) {
             if (ma_vars->pb_state & PB_PLAYING) {
-                ma_vars->pb_state &= ~PB_PLAYING;
-                ma_vars->pb_state |= PB_PAUSED; 
+                pause_pb(&ma_vars->pb_state);
             } else {
-                ma_vars->pb_state &= ~PB_PAUSED;
-                ma_vars->pb_state |= PB_PLAYING;
+                unpause_pb(&ma_vars->pb_state);
             }
         }
         SDL_SetTextureColorMod(play_button->texture, 150, 150, 150);

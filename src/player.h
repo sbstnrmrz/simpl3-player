@@ -50,6 +50,8 @@ void print_frames(f32 frames[], size_t framesSize);
 void print_fft_frame(cmplx fftFrame, size_t itr);
 void print_fft_frames(cmplx fftFrames[], size_t framesSize);
 void init_player(ma_vars_t *ma_vars);
+void unpause_pb(pb_state *state);
+void pause_pb(pb_state *state);
 
 void restart_pb();
 
