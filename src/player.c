@@ -1,4 +1,5 @@
 #include "player.h"
+#include "SDL3/SDL_render.h"
 #include "clock.h"
 #include "defs.h"
 #include "ui.h"
@@ -10,7 +11,7 @@ f32   *in = NULL;
 cmplx *fft_out = NULL;
 cmplx *fft_out_woz = NULL;
 size_t frames_size = 0;
-SDL_Texture *button_textures[8] = {0};
+
 
 box_t *prev_song_button = NULL;
 box_t *next_song_button = NULL;
@@ -18,6 +19,9 @@ box_t *progress_bar = NULL;
 box_t *play_button = NULL;
 box_t *pb_state_button = NULL;
 box_t *slider = NULL;
+SDL_Texture *button_textures[9] = {0};
+box_t *sidebar_button = NULL;
+SDL_FRect sidebar_rect = {0};
 
 f32 progress_bar_h = 20;
 f32 progress_bar_w = 300;
@@ -229,6 +233,22 @@ void init_ui(SDL_Renderer *renderer) {
     button_textures[BUTTON_ONCE] = IMG_LoadTexture(renderer, "assets/buttons/once.png");
     button_textures[BUTTON_LOOP] = IMG_LoadTexture(renderer, "assets/buttons/loop.png");
     button_textures[BUTTON_SHUFFLE] = IMG_LoadTexture(renderer, "assets/buttons/shuffle.png");
+    button_textures[BUTTON_SIDEBAR] = IMG_LoadTexture(renderer, "assets/buttons/sidebar.png");
+
+    sidebar_button = create_box(renderer, 
+                              (SDL_FRect) {
+                                    .x = 0,
+                                    .y = 0,
+                                    .w = 200,
+                                    .h = WIN_HEIGHT, 
+                              },
+                              WHITE,
+                              NULL,
+                              NULL,
+                              WHITE,
+                              NULL,
+                              BOX_BORDER
+                              ); 
 
     progress_bar = create_box(renderer, 
                               (SDL_FRect) {
@@ -448,6 +468,43 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
     } else {
         SDL_SetTextureColorMod(play_button->texture, 255, 255, 255);
     }
+
+}
+
+void open_sidebar(SDL_Renderer *renderer) {
+    
+
+}
+
+void close_sidebar(SDL_Renderer *renderer) {
+
+}
+
+void update_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
+    sidebar_rect = (SDL_FRect) {
+                        .w = 32, 
+                        .h = 32, 
+                        .x = 8, 
+                        .y = 8, 
+    }; 
+    if (check_mouse_rect_collision(mouse, sidebar_rect)) {
+        SDL_SetTextureColorMod(button_textures[BUTTON_SIDEBAR], 150, 150, 150);
+        if (mouse_clicked(mouse)) {
+            if (sidebar_button->state & BOX_VISIBLE) {
+                sidebar_button->state &= ~BOX_VISIBLE;
+            } else {
+                sidebar_button->state |= BOX_VISIBLE;
+            }
+        }
+    } else {
+        SDL_SetTextureColorMod(button_textures[BUTTON_SIDEBAR], 255, 255, 255);
+    }
+
+}
+
+void render_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
+
+    SDL_RenderTexture(renderer, button_textures[BUTTON_SIDEBAR], NULL, &sidebar_rect);
 
 }
 

@@ -135,7 +135,7 @@ typedef enum {
     BUTTON_ONCE = 5,
     BUTTON_LOOP = 6,
     BUTTON_SHUFFLE = 7,
-
+    BUTTON_SIDEBAR = 8,
 } button_id;
 
 #endif // DEFS_H

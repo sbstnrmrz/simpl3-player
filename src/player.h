@@ -49,6 +49,13 @@ void print_frame(f32 frame, size_t itr);
 void print_frames(f32 frames[], size_t framesSize);
 void print_fft_frame(cmplx fftFrame, size_t itr);
 void print_fft_frames(cmplx fftFrames[], size_t framesSize);
+
+void open_sidebar(SDL_Renderer *renderer);
+void close_sidebar(SDL_Renderer *renderer);
+void update_sidebar(SDL_Renderer *renderer, mouse_t mouse);
+void render_sidebar(SDL_Renderer *renderer, mouse_t mouse);
+void repos_buttons();
+
 void init_player(ma_vars_t *ma_vars);
 void unpause_pb(pb_state *state);
 void pause_pb(pb_state *state);

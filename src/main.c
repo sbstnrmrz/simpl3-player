@@ -190,6 +190,7 @@ void handle_events() {
 
 void update() {
     update_box_arr(engine.mouse);
+    update_sidebar(engine.renderer, engine.mouse);
     update_pb(&ma_vars);
 }
 
@@ -204,6 +205,7 @@ void render() {
     }
 
     render_box_arr(engine.renderer);
+    render_sidebar(engine.renderer, engine.mouse);
     render_pb(engine.renderer, engine.mouse, &ma_vars);
 
     SDL_RenderPresent(engine.renderer);
