@@ -11,13 +11,7 @@ typedef enum {
     TRIANGLE
 } waveType;
 
-typedef struct {
-    const char *name;
-    const char *dir;
-    mp3_t *mp3_list;
-    size_t mp3_list_size;
-    size_t current_mp3;
-} playlist_t;
+
 
 // Audio
 void rec_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount);
@@ -56,7 +50,7 @@ void update_sidebar(SDL_Renderer *renderer, mouse_t mouse);
 void render_sidebar(SDL_Renderer *renderer, mouse_t mouse);
 void repos_buttons();
 
-void init_player(ma_vars_t *ma_vars);
+void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars);
 void unpause_pb(pb_state *state);
 void pause_pb(pb_state *state);
 

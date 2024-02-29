@@ -21,7 +21,7 @@
 #define CLEAR_SCREEN system("clear")
 #endif
 
-#define arrayLen(x) sizeof(x)/sizeof(x[0])
+#define array_len(x) sizeof(x)/sizeof(x[0])
 #define PI atan2f(1, 1) * 4
 #define sgn(x) (x < 0) ? -1 : (x > 0)// ? 1 : 0
 #define SAMPLE_RATE 48000
@@ -100,6 +100,14 @@ typedef struct {
 } mp3_t;
 
 typedef struct {
+    const char *name;
+    const char *dir;
+    mp3_t *mp3_list;
+    size_t mp3_list_size;
+    size_t current_mp3;
+} playlist_t;
+
+typedef struct {
     mp3_t current_mp3;
     u64 cursor;
     u64 last_cursor;
@@ -124,18 +132,7 @@ typedef struct {
     pb_state          pb_state;
     rec_info          rec_info;
     rec_state         rec_state;
+    playlist_t        playlist;
 } ma_vars_t;
-
-typedef enum {
-    BUTTON_PLAY = 0,
-    BUTTON_PAUSE = 1,
-    BUTTON_NEXT_SONG = 2,
-    BUTTON_PREV_SONG = 3,
-    BUTTON_SLIDER = 4,
-    BUTTON_ONCE = 5,
-    BUTTON_LOOP = 6,
-    BUTTON_SHUFFLE = 7,
-    BUTTON_SIDEBAR = 8,
-} button_id;
 
 #endif // DEFS_H

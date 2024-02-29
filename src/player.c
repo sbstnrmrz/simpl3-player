@@ -2,6 +2,7 @@
 #include "clock.h"
 #include "defs.h"
 #include "ui.h"
+#include <string.h>
 
 //tsoding video fft. min: 1:39:31
 f32   *inSamples = NULL;
@@ -225,6 +226,10 @@ i32 pb_input(SDL_Event event, ma_vars_t *ma_vars) {
 }
 
 void init_ui(SDL_Renderer *renderer) {
+
+}
+
+void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
     button_textures[BUTTON_PLAY] = IMG_LoadTexture(renderer, "assets/buttons/play.png");
     button_textures[BUTTON_PAUSE] = IMG_LoadTexture(renderer, "assets/buttons/pause.png");
     button_textures[BUTTON_NEXT_SONG] = IMG_LoadTexture(renderer, "assets/buttons/next.png");
@@ -339,15 +344,16 @@ void init_ui(SDL_Renderer *renderer) {
                               BOX_VISIBLE
                               ); 
 
-    test_pl = create_playlist("assets/music/"); 
+//    test_pl = create_playlist("assets/music/"); 
 
-    sidebar_box_arr_size = test_pl.mp3_list_size;
+    sidebar_box_arr_size = ma_vars->playlist.mp3_list_size;
 
     sidebar_box_arr = malloc(sizeof(box_t*) * sidebar_box_arr_size);
 
     for (size_t i = 0; i < sidebar_box_arr_size; i++) {
-        printf("aasdasd\n");
         sidebar_box_arr[i] = malloc(sizeof(box_t));
+        char file[128] = {0};
+        strncpy(file, ma_vars->playlist.mp3_list[i].filename, strlen(ma_vars->playlist.mp3_list[i].filename)-4);
         sidebar_box_arr[i] = create_box(renderer, 
                                       (SDL_FRect) {
                                         .x = 0,
@@ -357,17 +363,15 @@ void init_ui(SDL_Renderer *renderer) {
                                       },
                                         WHITE, 
                                         NULL, 
-                                        NULL,//test_pl.mp3_list[i].filename, 
+                                        file,//test_pl.mp3_list[i].filename, 
                                         WHITE, 
                                         NULL, 
                                         BOX_BORDER);
     }
 
 //    print_playlist(test_pl);
-}
-
-void init_player(ma_vars_t *ma_vars) {
     ma_vars->pb_state |= PB_ONCE;
+    play_mp3(ma_vars->playlist.mp3_list[ma_vars->playlist.current_mp3], ma_vars);
 }
 
 void pause_pb(pb_state *state) {
@@ -402,13 +406,23 @@ void update_pb(ma_vars_t *ma_vars) {
         }
         if (ma_vars->pb_state & PB_SHUFFLE) {
             pause_pb(&ma_vars->pb_state);
-            play_mp3(test_pl.mp3_list[rand()%test_pl.mp3_list_size], ma_vars);
+            play_mp3(ma_vars->playlist.mp3_list[rand()%ma_vars->playlist.mp3_list_size], ma_vars);
             unpause_pb(&ma_vars->pb_state);
         }
     } else if (err != MA_SUCCESS) {
         fprintf(stderr, "An error has ocurred. ma_result: %d\n", err);
         exit(1);
     }
+
+    for (size_t i = 0; i < sidebar_box_arr_size; i++) {
+        if (sidebar_box_arr[i]->state & BOX_HOVERED) {
+            SDL_SetTextureColorMod(sidebar_box_arr[i]->font_texture, 150, 150, 150);
+        } else {
+            SDL_SetTextureColorMod(sidebar_box_arr[i]->font_texture, 255, 255, 255);
+        }
+    }
+
+    SDL_SetTextureColorMod(sidebar_box_arr[ma_vars->playlist.current_mp3]->font_texture, 150, 150, 150);
 }
 
 void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) { 
@@ -434,15 +448,15 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
         if (mouse_clicked(mouse)) {    
             size_t t = 0;
             if (ma_vars->pb_state & PB_SHUFFLE) {
-                t = rand()%test_pl.mp3_list_size; 
-            } else if (test_pl.current_mp3 < 4) {
-                t = test_pl.current_mp3++;
+                t = rand()%ma_vars->playlist.mp3_list_size; 
+            } else if (ma_vars->playlist.current_mp3 < ma_vars->playlist.mp3_list_size-1) {
+                t = ma_vars->playlist.current_mp3 + 1;
             } else {
-                t = test_pl.current_mp3 = 0;
+                t = ma_vars->playlist.current_mp3 = 0;
             }
-            play_mp3(test_pl.mp3_list[t], ma_vars);
+            play_mp3(ma_vars->playlist.mp3_list[t], ma_vars);
+            ma_vars->playlist.current_mp3 = t;
         }
-
 
         SDL_SetTextureColorMod(next_song_button->texture, 150, 150, 150);
     } else {
@@ -452,13 +466,14 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
         if (mouse_clicked(mouse)) {    
             size_t t = 0;
             if (ma_vars->pb_state & PB_SHUFFLE) {
-                t = rand()%test_pl.mp3_list_size; 
-            } else if (test_pl.current_mp3 > 0) {
-                t = test_pl.current_mp3--;
+                t = rand()%ma_vars->playlist.mp3_list_size; 
+            } else if (ma_vars->playlist.current_mp3 > 0) {
+                t = ma_vars->playlist.current_mp3-1;
             } else {
-                t = test_pl.current_mp3 = test_pl.mp3_list_size-1;
+                t = ma_vars->playlist.current_mp3 = ma_vars->playlist.mp3_list_size-1;
             }
-            play_mp3(test_pl.mp3_list[t], ma_vars);
+            play_mp3(ma_vars->playlist.mp3_list[t], ma_vars);
+            ma_vars->playlist.current_mp3 = t;
         }
         SDL_SetTextureColorMod(prev_song_button->texture, 150, 150, 150);
     } else {
@@ -748,9 +763,11 @@ void print_fft_frames(cmplx frames[], size_t framesSize) {
 void print_pb_info(pb_info pb_info) {
     u32 cursor_to_ms = pb_info.cursor / SAMPLE_RATE;
     u32 frames_to_ms = pb_info.current_mp3.frames / SAMPLE_RATE;
+    char file[128] = {0};
+    strncpy(file, pb_info.current_mp3.filename, strlen(pb_info.current_mp3.filename)-4);
 
     printf("[PLAYBACK INFO]\n");
-    printf("  File: %s\n", pb_info.current_mp3.filename);
+    printf("  File: %s\n", file);
     printf("  Format: %s\n", pb_info.current_mp3.format);
     printf("  Sample rate: %uhz\n", pb_info.current_mp3.sample_rate);
     printf("  Channels: %u\n", pb_info.current_mp3.channels);

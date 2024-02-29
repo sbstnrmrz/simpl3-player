@@ -61,6 +61,9 @@ int parse_args(int argc, char *argv[]) {
     if (*argv[1] == '-') {
         if (*(argv[1]+1) == 'p') {
             char *file = strchr(argv[2], '.');
+            if (file == NULL) {
+                return PLAYBACK_MP3;
+            }
             while(file != NULL) {
 //              if (strcasecmp(file+1, "wav") || strcasecmp(file+1, "mp3") || strcasecmp(file+1, "flac")) {
 //                  break;
@@ -243,9 +246,11 @@ int main(int argc, char *argv[]) {
         ma_vars.deviceConfig.dataCallback      = pb_callback;
         ma_vars.deviceConfig.pUserData         = &ma_vars;
         
-        mp3_t test = {0};
-        strcpy(test.filename, argv[2]);
-        play_mp3(test, &ma_vars);
+        
+        ma_vars.playlist = create_playlist(argv[2]);
+//      mp3_t test = {0};
+//      strcpy(test.filename, argv[2]);
+//      play_mp3(test, &ma_vars);
 
     }
 
@@ -300,7 +305,11 @@ int main(int argc, char *argv[]) {
     }
     printf("Context initialized\n");
 
-    if(ma_device_init(NULL, &ma_vars.deviceConfig, &ma_vars.device) != MA_SUCCESS) {
+    init_sdl("SIMPl3 PLAYER", WIN_WIDTH, WIN_HEIGHT, 0);
+    init_ui(engine.renderer);
+    init_player(engine.renderer, &ma_vars);
+
+    if (ma_device_init(NULL, &ma_vars.deviceConfig, &ma_vars.device) != MA_SUCCESS) {
         fprintf(stderr, "Failed to initialize device\n");
         exit(1);
     }
@@ -311,28 +320,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     printf("Device started\n");
-
-    ma_device_start(&ma_vars.device);
-//  playlist_t play = create_playlist("assets/music/");
-//  print_playlist(play);
-
-// PRUBA
-//  ma_device_stop(&ma_vars.device);
-
-//  if (ma_decoder_init_file("assets/music/MF DOOM - Doomsday.mp3", &ma_vars.decoderConfig, &ma_vars.decoder) != MA_SUCCESS) {
-//      fprintf(stderr, "Failed to open %s file.\n", argv[2]);
-//      exit(1);
-//  }
-//  ma_decoder_get_length_in_pcm_frames(&ma_vars.decoder, &ma_vars.pb_info.total_frames);
-//  ma_vars.pb_info.sample_rate = ma_vars.decoder.outputSampleRate;
-//  ma_vars.pb_info.channels = ma_vars.decoder.outputChannels;
-//  ma_vars.pb_info.last_cursor = 0;
-// PRUEBA
     
-    init_sdl("siMPl3 player", WIN_WIDTH, WIN_HEIGHT, 0);
-    init_ui(engine.renderer);
-    init_player(&ma_vars);
-
 	while(engine.running) {
 		handle_events();
         update();

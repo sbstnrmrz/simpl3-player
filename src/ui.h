@@ -4,7 +4,7 @@
 #include "defs.h"
 #include "clock.h"
 
-#define DEFAULT_FONT TTF_OpenFont("Cave-Story.ttf", 48)
+#define DEFAULT_FONT TTF_OpenFont("assets/fonts/FreeSans.ttf", 128)
 
 typedef enum {
     MB_NONE         = 0,
@@ -47,6 +47,18 @@ typedef struct {
     box_state    state;
     size_t       id;
 } box_t;
+
+typedef enum {
+    BUTTON_PLAY = 0,
+    BUTTON_PAUSE = 1,
+    BUTTON_NEXT_SONG = 2,
+    BUTTON_PREV_SONG = 3,
+    BUTTON_SLIDER = 4,
+    BUTTON_ONCE = 5,
+    BUTTON_LOOP = 6,
+    BUTTON_SHUFFLE = 7,
+    BUTTON_SIDEBAR = 8,
+} button_id;
 
 box_t *create_box(SDL_Renderer *renderer, 
                   SDL_FRect rect, 
