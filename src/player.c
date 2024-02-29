@@ -1,5 +1,4 @@
 #include "player.h"
-#include "SDL3/SDL_render.h"
 #include "clock.h"
 #include "defs.h"
 #include "ui.h"
@@ -239,7 +238,7 @@ void init_ui(SDL_Renderer *renderer) {
                               (SDL_FRect) {
                                     .x = 0,
                                     .y = 0,
-                                    .w = 200,
+                                    .w = 0,
                                     .h = WIN_HEIGHT, 
                               },
                               WHITE,
@@ -311,7 +310,7 @@ void init_ui(SDL_Renderer *renderer) {
                               ); 
     next_song_button = create_box(renderer, 
                               (SDL_FRect) {
-                                .x = play_button->rect.x+play_button->rect.w + 32,
+                                .x = play_button->rect.x+play_button->rect.w*2,
                                 .y = (f32)WIN_HEIGHT/2 + 32,
                                 .w = 32,
                                 .h = 32,
@@ -340,7 +339,7 @@ void init_ui(SDL_Renderer *renderer) {
                               ); 
 
     test_pl = create_playlist("assets/music/"); 
-    print_playlist(test_pl);
+//    print_playlist(test_pl);
 }
 
 void init_player(ma_vars_t *ma_vars) {
@@ -355,6 +354,15 @@ void pause_pb(pb_state *state) {
 void unpause_pb(pb_state *state) {
     *state &= ~PB_PAUSED;
     *state |= PB_PLAYING;
+}
+
+void repos_buttons() {
+    progress_bar->rect.x     = (sidebar_button->rect.x + sidebar_button->rect.w) + ((WIN_WIDTH - (sidebar_button->rect.x +sidebar_button->rect.w)) - progress_bar->rect.w)/2;
+    play_button->rect.x      = (progress_bar->rect.x) + (progress_bar->rect.w - play_button->rect.w)/2;
+    prev_song_button->rect.x = play_button->rect.x - play_button->rect.w * 2;
+    next_song_button->rect.x = play_button->rect.x + play_button->rect.w * 2;
+    pb_state_button->rect.x  = play_button->rect.x;
+
 }
 
 void update_pb(ma_vars_t *ma_vars) {
@@ -492,8 +500,12 @@ void update_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
         if (mouse_clicked(mouse)) {
             if (sidebar_button->state & BOX_VISIBLE) {
                 sidebar_button->state &= ~BOX_VISIBLE;
+                sidebar_button->rect.w = 0;
+                repos_buttons();
             } else {
                 sidebar_button->state |= BOX_VISIBLE;
+                sidebar_button->rect.w = 200;
+                repos_buttons();
             }
         }
     } else {
