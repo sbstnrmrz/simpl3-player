@@ -1,6 +1,4 @@
 #include "ui.h"
-#include "SDL3/SDL_image.h"
-#include "SDL3/SDL_render.h"
 #include "defs.h"
 
 box_t **box_arr = NULL;

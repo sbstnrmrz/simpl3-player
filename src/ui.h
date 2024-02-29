@@ -4,7 +4,7 @@
 #include "defs.h"
 #include "clock.h"
 
-#define DEFAULT_FONT TTF_OpenFont("UbuntuMono Nerd Font.ttf", 48)
+#define DEFAULT_FONT TTF_OpenFont("Cave-Story.ttf", 48)
 
 typedef enum {
     MB_NONE         = 0,

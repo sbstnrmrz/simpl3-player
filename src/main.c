@@ -158,6 +158,7 @@ void init_sdl(const char *title, int win_width, int win_height, u32 flags) {
         fprintf(stderr, "Failed to initialize TTF. SDL_Error: %s\n", SDL_GetError());
         exit(1);
     }
+    printf("TTF initialized\n");
     engine.running = true;
 
 }

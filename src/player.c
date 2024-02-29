@@ -11,16 +11,17 @@ cmplx *fft_out = NULL;
 cmplx *fft_out_woz = NULL;
 size_t frames_size = 0;
 
-
 box_t *prev_song_button = NULL;
 box_t *next_song_button = NULL;
 box_t *progress_bar = NULL;
 box_t *play_button = NULL;
 box_t *pb_state_button = NULL;
 box_t *slider = NULL;
-SDL_Texture *button_textures[9] = {0};
 box_t *sidebar_button = NULL;
+box_t **sidebar_box_arr = NULL;
+size_t sidebar_box_arr_size = 0;
 SDL_FRect sidebar_rect = {0};
+SDL_Texture *button_textures[9] = {0};
 
 f32 progress_bar_h = 20;
 f32 progress_bar_w = 300;
@@ -247,7 +248,7 @@ void init_ui(SDL_Renderer *renderer) {
                               WHITE,
                               NULL,
                               BOX_BORDER
-                              ); 
+                     ); 
 
     progress_bar = create_box(renderer, 
                               (SDL_FRect) {
@@ -262,7 +263,7 @@ void init_ui(SDL_Renderer *renderer) {
                               WHITE,
                               NULL,
                               BOX_VISIBLE | BOX_COLOR_FILL
-                              ); 
+                    ); 
 
     play_button = create_box(renderer, 
                               (SDL_FRect) {
@@ -277,7 +278,7 @@ void init_ui(SDL_Renderer *renderer) {
                               WHITE,
                               NULL,
                               BOX_VISIBLE
-                              ); 
+                  ); 
 
     slider = create_box(renderer, 
                               (SDL_FRect) {
@@ -339,6 +340,29 @@ void init_ui(SDL_Renderer *renderer) {
                               ); 
 
     test_pl = create_playlist("assets/music/"); 
+
+    sidebar_box_arr_size = test_pl.mp3_list_size;
+
+    sidebar_box_arr = malloc(sizeof(box_t*) * sidebar_box_arr_size);
+
+    for (size_t i = 0; i < sidebar_box_arr_size; i++) {
+        printf("aasdasd\n");
+        sidebar_box_arr[i] = malloc(sizeof(box_t));
+        sidebar_box_arr[i] = create_box(renderer, 
+                                      (SDL_FRect) {
+                                        .x = 0,
+                                        .y = 0,
+                                        .w = 0,
+                                        .h = 0,
+                                      },
+                                        WHITE, 
+                                        NULL, 
+                                        NULL,//test_pl.mp3_list[i].filename, 
+                                        WHITE, 
+                                        NULL, 
+                                        BOX_BORDER);
+    }
+
 //    print_playlist(test_pl);
 }
 
@@ -408,12 +432,15 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
 
     if (next_song_button->state & BOX_HOVERED) {
         if (mouse_clicked(mouse)) {    
-            if (test_pl.current_mp3 < 4) {
-                test_pl.current_mp3++;
+            size_t t = 0;
+            if (ma_vars->pb_state & PB_SHUFFLE) {
+                t = rand()%test_pl.mp3_list_size; 
+            } else if (test_pl.current_mp3 < 4) {
+                t = test_pl.current_mp3++;
             } else {
-                test_pl.current_mp3 = 0;
+                t = test_pl.current_mp3 = 0;
             }
-            play_mp3(test_pl.mp3_list[test_pl.current_mp3], ma_vars);
+            play_mp3(test_pl.mp3_list[t], ma_vars);
         }
 
 
@@ -423,12 +450,15 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
     }
     if (prev_song_button->state & BOX_HOVERED) {
         if (mouse_clicked(mouse)) {    
-            if (test_pl.current_mp3 > 0) {
-                test_pl.current_mp3--;
+            size_t t = 0;
+            if (ma_vars->pb_state & PB_SHUFFLE) {
+                t = rand()%test_pl.mp3_list_size; 
+            } else if (test_pl.current_mp3 > 0) {
+                t = test_pl.current_mp3--;
             } else {
-                test_pl.current_mp3 = test_pl.mp3_list_size-1;
+                t = test_pl.current_mp3 = test_pl.mp3_list_size-1;
             }
-            play_mp3(test_pl.mp3_list[test_pl.current_mp3], ma_vars);
+            play_mp3(test_pl.mp3_list[t], ma_vars);
         }
         SDL_SetTextureColorMod(prev_song_button->texture, 150, 150, 150);
     } else {
@@ -480,11 +510,28 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
 }
 
 void open_sidebar(SDL_Renderer *renderer) {
-    
+    for (size_t i = 0; i < sidebar_box_arr_size; i++) {
+        sidebar_box_arr[i]->rect = (SDL_FRect) {
+                                        .w = sidebar_button->rect.w,
+                                        .h = sidebar_rect.h,
+                                        .x = 0,
+                                        .y = (sidebar_rect.y + sidebar_rect.h + sidebar_rect.y) + (i * sidebar_rect.h)
+                                    }; 
+        sidebar_box_arr[i]->state |= BOX_VISIBLE;
+    }
 
 }
 
 void close_sidebar(SDL_Renderer *renderer) {
+    for (size_t i = 0; i < sidebar_box_arr_size; i++) {
+        sidebar_box_arr[i]->rect = (SDL_FRect) {
+                                        .w = 0,
+                                        .h = 0,
+                                        .x = 0,
+                                        .y = 0 
+                                    }; 
+        sidebar_box_arr[i]->state &= ~BOX_VISIBLE;
+    }
 
 }
 
@@ -501,10 +548,12 @@ void update_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
             if (sidebar_button->state & BOX_VISIBLE) {
                 sidebar_button->state &= ~BOX_VISIBLE;
                 sidebar_button->rect.w = 0;
+                close_sidebar(renderer);
                 repos_buttons();
             } else {
                 sidebar_button->state |= BOX_VISIBLE;
                 sidebar_button->rect.w = 200;
+                open_sidebar(renderer);
                 repos_buttons();
             }
         }
