@@ -195,7 +195,7 @@ void handle_events() {
 void update() {
     update_box_arr(engine.mouse);
     update_sidebar(engine.renderer, engine.mouse);
-    update_pb(&ma_vars);
+    update_pb(&ma_vars, engine.mouse);
 }
 
 void render() {
@@ -305,7 +305,7 @@ int main(int argc, char *argv[]) {
     }
     printf("Context initialized\n");
 
-    init_sdl("SIMPl3 PLAYER", WIN_WIDTH, WIN_HEIGHT, 0);
+    init_sdl("siMPl3 PLAYER", WIN_WIDTH, WIN_HEIGHT, 0);
     init_ui(engine.renderer);
     init_player(engine.renderer, &ma_vars);
 

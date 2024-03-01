@@ -344,10 +344,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               BOX_VISIBLE
                               ); 
 
-//    test_pl = create_playlist("assets/music/"); 
-
     sidebar_box_arr_size = ma_vars->playlist.mp3_list_size;
-
     sidebar_box_arr = malloc(sizeof(box_t*) * sidebar_box_arr_size);
 
     for (size_t i = 0; i < sidebar_box_arr_size; i++) {
@@ -368,8 +365,6 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                                         NULL, 
                                         BOX_BORDER);
     }
-
-//    print_playlist(test_pl);
     ma_vars->pb_state |= PB_ONCE;
     play_mp3(ma_vars->playlist.mp3_list[ma_vars->playlist.current_mp3], ma_vars);
 }
@@ -393,7 +388,7 @@ void repos_buttons() {
 
 }
 
-void update_pb(ma_vars_t *ma_vars) {
+void update_pb(ma_vars_t *ma_vars, mouse_t mouse) {
     if (err == MA_AT_END) {
         if (ma_vars->pb_state & PB_LOOPING) {
             pause_pb(&ma_vars->pb_state);
@@ -417,6 +412,10 @@ void update_pb(ma_vars_t *ma_vars) {
     for (size_t i = 0; i < sidebar_box_arr_size; i++) {
         if (sidebar_box_arr[i]->state & BOX_HOVERED) {
             SDL_SetTextureColorMod(sidebar_box_arr[i]->font_texture, 150, 150, 150);
+            if (mouse_clicked(mouse)) {
+                play_mp3(ma_vars->playlist.mp3_list[i], ma_vars); 
+                ma_vars->playlist.current_mp3 = i;
+            }
         } else {
             SDL_SetTextureColorMod(sidebar_box_arr[i]->font_texture, 255, 255, 255);
         }
@@ -579,7 +578,6 @@ void update_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
 }
 
 void render_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
-
     SDL_RenderTexture(renderer, button_textures[BUTTON_SIDEBAR], NULL, &sidebar_rect);
 
 }

@@ -33,7 +33,7 @@ f32 square_wave(f32 phase);
 f32 sawtooth_wave(f32 phase);
 f32 triangle_wave(f32 phase);
 void draw_wave(SDL_Renderer *renderer);
-void update_pb(ma_vars_t *ma_vars);
+void update_pb(ma_vars_t *ma_vars, mouse_t mouse);
 void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars);
 void play_mp3(mp3_t mp3, ma_vars_t *ma_vars);
 void print_playlist(playlist_t playlist);
