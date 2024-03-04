@@ -190,8 +190,6 @@ void render() {
     SDL_SetRenderDrawColor(engine.renderer, BLACK.r, BLACK.g, BLACK.b, BLACK.a);
     SDL_RenderClear(engine.renderer);
  
-//    draw_wave(engine.renderer);
-
     if (ma_vars.pb_state == PB_PLAYING) {
 
     }
@@ -209,6 +207,12 @@ void uninit_sdl() {
     SDL_DestroyWindow(engine.window); 
     SDL_Quit();
 
+}
+
+void uninit_ma() {
+    ma_device_uninit(&ma_vars.device);
+    ma_context_uninit(&ma_vars.context);
+    ma_decoder_uninit(&ma_vars.decoder);
 }
 
 void debug() {
@@ -285,11 +289,8 @@ int main(int argc, char *argv[]) {
         debug();
 	}
 
-    ma_device_uninit(&ma_vars.device);
-    ma_context_uninit(&ma_vars.context);
-    ma_decoder_uninit(&ma_vars.decoder);
-
     uninit_sdl();    
+    uninit_ma();
 
     return 0;
 }

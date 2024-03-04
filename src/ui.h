@@ -45,6 +45,7 @@ typedef struct {
     SDL_Texture *font_texture;
     Clock        anim_clock;
     box_state    state;
+    bool         new_text;
     size_t       id;
 } box_t;
 

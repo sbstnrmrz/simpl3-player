@@ -2,7 +2,6 @@
 #include "clock.h"
 #include "defs.h"
 #include "ui.h"
-#include <string.h>
 
 //tsoding video fft. min: 1:39:31
 f32   *inSamples = NULL;
@@ -14,11 +13,13 @@ size_t frames_size = 0;
 
 box_t *prev_song_button = NULL;
 box_t *next_song_button = NULL;
+box_t *total_time_box = NULL;
+box_t *time_left_box = NULL;
 box_t *progress_bar = NULL;
 box_t *play_button = NULL;
 box_t *pb_state_button = NULL;
 box_t *slider = NULL;
-box_t *sidebar_button = NULL;
+box_t *sidebar_box = NULL;
 box_t **sidebar_box_arr = NULL;
 size_t sidebar_box_arr_size = 0;
 SDL_FRect sidebar_rect = {0};
@@ -204,7 +205,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
     button_textures[BUTTON_SHUFFLE] = IMG_LoadTexture(renderer, "assets/buttons/shuffle.png");
     button_textures[BUTTON_SIDEBAR] = IMG_LoadTexture(renderer, "assets/buttons/sidebar.png");
 
-    sidebar_button = create_box(renderer, 
+    sidebar_box = create_box(renderer, 
                               (SDL_FRect) {
                                     .x = 0,
                                     .y = 0,
@@ -233,6 +234,36 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               NULL,
                               BOX_VISIBLE | BOX_COLOR_FILL
                     ); 
+
+    time_left_box = create_box(renderer, 
+                              (SDL_FRect) {
+                                .w = 60,
+                                .h = 32,
+                                .x = (progress_bar->rect.x - 60) - 32,
+                                .y = (progress_bar->rect.y + progress_bar->rect.h/2) - 32/2,
+                              },
+                              WHITE,
+                              NULL,
+                              "0:00",
+                              WHITE,
+                              NULL,
+                              BOX_VISIBLE | BOX_BORDER
+                  ); 
+
+    total_time_box = create_box(renderer, 
+                              (SDL_FRect) {
+                                .w = 60,
+                                .h = 32,
+                                .x = (progress_bar->rect.x + progress_bar->rect.w) + 32,
+                                .y = (progress_bar->rect.y + progress_bar->rect.h/2) - 32/2,
+                              },
+                              WHITE,
+                              NULL,
+                              "0:00",
+                              WHITE,
+                              NULL,
+                              BOX_VISIBLE | BOX_BORDER
+                  ); 
 
     play_button = create_box(renderer, 
                               (SDL_FRect) {
@@ -344,7 +375,7 @@ void unpause_pb(pb_state *state) {
 }
 
 void repos_buttons() {
-    progress_bar->rect.x     = (sidebar_button->rect.x + sidebar_button->rect.w) + ((WIN_WIDTH - (sidebar_button->rect.x +sidebar_button->rect.w)) - progress_bar->rect.w)/2;
+    progress_bar->rect.x     = (sidebar_box->rect.x + sidebar_box->rect.w) + ((WIN_WIDTH - (sidebar_box->rect.x +sidebar_box->rect.w)) - progress_bar->rect.w)/2;
     play_button->rect.x      = (progress_bar->rect.x) + (progress_bar->rect.w - play_button->rect.w)/2;
     prev_song_button->rect.x = play_button->rect.x - play_button->rect.w * 2;
     next_song_button->rect.x = play_button->rect.x + play_button->rect.w * 2;
@@ -364,9 +395,12 @@ void update_pb(ma_vars_t *ma_vars, mouse_t mouse) {
             exit(1);
         }
         if (ma_vars->pb_state & PB_SHUFFLE) {
+            size_t ran = rand()%ma_vars->playlist.mp3_list_size;
+
             pause_pb(&ma_vars->pb_state);
-            play_mp3(ma_vars->playlist.mp3_list[rand()%ma_vars->playlist.mp3_list_size], ma_vars);
+            play_mp3(ma_vars->playlist.mp3_list[ran], ma_vars);
             unpause_pb(&ma_vars->pb_state);
+            ma_vars->playlist.current_mp3 = ran;
         }
     } else if (err != MA_SUCCESS) {
         fprintf(stderr, "An error has ocurred. ma_result: %d\n", err);
@@ -395,9 +429,13 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
     if (progress_bar->state & BOX_HOVERED) {
         if (mouse_clicked(mouse)) {
             pause_pb(&ma_vars->pb_state);
+//          ma_vars->pb_state &= ~PB_PLAYING;
+//          ma_vars->pb_state |= PB_PAUSED;
             u64 pos = ((ma_vars->pb_info.current_mp3.frames * (mouse.pos.x - progress_bar->rect.x) )/progress_bar->rect.w);
             ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, pos); 
             unpause_pb(&ma_vars->pb_state);
+//          ma_vars->pb_state |= PB_PLAYING;
+//          ma_vars->pb_state &= ~PB_PAUSED;
         } 
     }
 
@@ -489,7 +527,7 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
 void open_sidebar(SDL_Renderer *renderer) {
     for (size_t i = 0; i < sidebar_box_arr_size; i++) {
         sidebar_box_arr[i]->rect = (SDL_FRect) {
-                                        .w = sidebar_button->rect.w,
+                                        .w = sidebar_box->rect.w,
                                         .h = sidebar_rect.h,
                                         .x = 0,
                                         .y = (sidebar_rect.y + sidebar_rect.h + sidebar_rect.y) + (i * sidebar_rect.h)
@@ -522,14 +560,14 @@ void update_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
     if (check_mouse_rect_collision(mouse, sidebar_rect)) {
         SDL_SetTextureColorMod(button_textures[BUTTON_SIDEBAR], 150, 150, 150);
         if (mouse_clicked(mouse)) {
-            if (sidebar_button->state & BOX_VISIBLE) {
-                sidebar_button->state &= ~BOX_VISIBLE;
-                sidebar_button->rect.w = 0;
+            if (sidebar_box->state & BOX_VISIBLE) {
+                sidebar_box->state &= ~BOX_VISIBLE;
+                sidebar_box->rect.w = 0;
                 close_sidebar(renderer);
                 repos_buttons();
             } else {
-                sidebar_button->state |= BOX_VISIBLE;
-                sidebar_button->rect.w = 200;
+                sidebar_box->state |= BOX_VISIBLE;
+                sidebar_box->rect.w = 200;
                 open_sidebar(renderer);
                 repos_buttons();
             }
@@ -606,7 +644,7 @@ void draw_wave(SDL_Renderer *renderer) {
 }
 
 void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
-    ma_result err;
+    ma_result err = {0};
     pause_pb(&ma_vars->pb_state);
 
     char *str = NULL;
