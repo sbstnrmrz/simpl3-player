@@ -81,18 +81,6 @@ int parse_args(int argc, char *argv[]) {
             } 
             return ERROR_FILETYPE; 
         }
-        if (*(argv[1]+1) == 'r') {
-            if (argc < 3) {
-                return RECORD_DEFAULT;
-            }
-            char *file = strchr(argv[2], '.');
-            while (file != NULL) {
-                if (strcasecmp(file+1, "wav")) {
-                    return RECORD_WAV;
-                }
-            }
-            return ERROR_FILETYPE;
-        }
         if (*(argv[1]+1) == 'h') {
             return PRINT_HELP;
         }
@@ -240,47 +228,17 @@ int main(int argc, char *argv[]) {
     if (parse == PLAYBACK_WAV || parse == PLAYBACK_MP3 || parse == PLAYBACK_FLAC) {
         printf("Playback mode selected\n");
 
-        ma_vars.decoderConfig = ma_decoder_config_init(ma_format_f32, 2, 48000); 
+        ma_vars.decoder_config = ma_decoder_config_init(ma_format_f32, 2, 48000); 
 
-        ma_vars.deviceConfig = ma_device_config_init(ma_device_type_playback);
-        ma_vars.deviceConfig.dataCallback      = pb_callback;
-        ma_vars.deviceConfig.pUserData         = &ma_vars;
-        
+        ma_vars.device_config = ma_device_config_init(ma_device_type_playback);
+        ma_vars.device_config.dataCallback      = pb_callback;
+        ma_vars.device_config.pUserData         = &ma_vars;
         
         ma_vars.playlist = create_playlist(argv[2]);
 //      mp3_t test = {0};
 //      strcpy(test.filename, argv[2]);
 //      play_mp3(test, &ma_vars);
 
-    }
-
-    if (parse == RECORD_DEFAULT || parse == RECORD_WAV) {
-        printf("Capture mode selected\n");
-        char *file = "record/record1.wav";
-
-//      char *file = "record/";
-//      if (argc < 3) {
-//          strcat(file, "record1.wav");
-//      } else {
-//          strcat(file, argv[2]);
-//          strcat(file, ".wav");
-//      }
-
-        ma_vars.encoderConfig = ma_encoder_config_init(ma_encoding_format_wav, ma_format_f32, 2, SAMPLE_RATE);
-
-        if (ma_encoder_init_file(file , &ma_vars.encoderConfig, &ma_vars.encoder) != MA_SUCCESS) {
-            fprintf(stderr, "Failed to initialize output file: %s.\n", file);
-            exit(1);
-        }
-        ma_vars.deviceConfig = ma_device_config_init(ma_device_type_capture);
-        ma_vars.deviceConfig.capture.format   = ma_vars.encoder.config.format;
-        ma_vars.deviceConfig.capture.channels = ma_vars.encoder.config.channels;
-        ma_vars.deviceConfig.sampleRate       = ma_vars.encoder.config.sampleRate;
-        ma_vars.deviceConfig.dataCallback     = rec_callback;
-        ma_vars.deviceConfig.pUserData        = &ma_vars;
-
-        printf("Output file: %s\n", file);
-        ma_vars.rec_state = REC_RECORDING;
     }
     if (parse == PRINT_HELP) {
         print_help();
@@ -306,10 +264,9 @@ int main(int argc, char *argv[]) {
     printf("Context initialized\n");
 
     init_sdl("siMPl3 PLAYER", WIN_WIDTH, WIN_HEIGHT, 0);
-    init_ui(engine.renderer);
     init_player(engine.renderer, &ma_vars);
 
-    if (ma_device_init(NULL, &ma_vars.deviceConfig, &ma_vars.device) != MA_SUCCESS) {
+    if (ma_device_init(NULL, &ma_vars.device_config, &ma_vars.device) != MA_SUCCESS) {
         fprintf(stderr, "Failed to initialize device\n");
         exit(1);
     }
@@ -330,7 +287,7 @@ int main(int argc, char *argv[]) {
 
     ma_device_uninit(&ma_vars.device);
     ma_context_uninit(&ma_vars.context);
-    ma_encoder_uninit(&ma_vars.encoder);
+    ma_decoder_uninit(&ma_vars.decoder);
 
     uninit_sdl();    
 

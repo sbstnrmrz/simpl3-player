@@ -62,19 +62,6 @@ void pb_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint3
     (void)pInput;
 }
 
-void rec_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
-    ma_vars_t *ma_vars = (ma_vars_t*)pDevice->pUserData;
-    if (ma_vars->rec_state == REC_RECORDING) {
-        ma_encoder_write_pcm_frames(&ma_vars->encoder , pInput, frameCount, NULL);
-        in = (f32*)pInput;
-        fft_out = (cmplx*)malloc(sizeof(cmplx) * frameCount);
-        fft(in, 1, fft_out, frameCount);
-    }
-    frames_size = frameCount;
-
-    (void)pOutput;
-}
-
 void dft(float *in, cmplx *out, size_t n) {
     for (size_t f = 0; f < n; f++) {
         out[f] = 0;
@@ -187,25 +174,6 @@ f32* auto_correlate(f32 *samples, size_t n) {
     return result;
 }
 
-
-f32 sine_wave(f32 phase) {
-    return (f32)sin(2.0f * PI * phase);
-}
-
-f32 square_wave(f32 phase) {
-    return (f32)sgn(sine_wave(phase)); 
-}
-
-f32 triangle_wave(f32 phase) {
-    return (4.0f * fabs(phase - floorf(phase + 1.0f/2.0f)) - 1.0f);
-}
-
-f32 sawtooth_wave(f32 phase) {
-    f32 freq = phase * SAMPLE_RATE;
-    f32 t = phase / freq; 
-    return (2.0f * fmod(t, 1.0f/freq) * freq - 1.0f); 
-}
-
 i32 pb_input(SDL_Event event, ma_vars_t *ma_vars) {
     f32 sec = ((f32)ma_vars->pb_info.cursor/SAMPLE_RATE);
     if (event.type == SDL_EVENT_KEY_DOWN) {
@@ -223,10 +191,6 @@ i32 pb_input(SDL_Event event, ma_vars_t *ma_vars) {
     }
 
     return 0;
-}
-
-void init_ui(SDL_Renderer *renderer) {
-
 }
 
 void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
@@ -456,7 +420,6 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
             play_mp3(ma_vars->playlist.mp3_list[t], ma_vars);
             ma_vars->playlist.current_mp3 = t;
         }
-
         SDL_SetTextureColorMod(next_song_button->texture, 150, 150, 150);
     } else {
         SDL_SetTextureColorMod(next_song_button->texture, 255, 255, 255);
@@ -649,16 +612,16 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     char *str = NULL;
     str = strcat(mp3.dir, mp3.filename);
 
-    err = ma_decoder_init_file(str, &ma_vars->decoderConfig, &ma_vars->decoder); 
+    err = ma_decoder_init_file(str, &ma_vars->decoder_config, &ma_vars->decoder); 
 
     if (err != MA_SUCCESS) {
         fprintf(stderr, "Failed to open '%s' mp3 file. MA_ERROR: %d\n", mp3.filename, err);
         exit(1);
     }
 
-    ma_vars->deviceConfig.playback.format   = ma_vars->decoder.outputFormat;
-    ma_vars->deviceConfig.playback.channels = ma_vars->decoder.outputChannels;
-    ma_vars->deviceConfig.sampleRate        = ma_vars->decoder.outputSampleRate;
+    ma_vars->device_config.playback.format   = ma_vars->decoder.outputFormat;
+    ma_vars->device_config.playback.channels = ma_vars->decoder.outputChannels;
+    ma_vars->device_config.sampleRate        = ma_vars->decoder.outputSampleRate;
     ma_decoder_get_length_in_pcm_frames(&ma_vars->decoder, &ma_vars->pb_info.current_mp3.frames);
 
     if (ma_vars->decoder.outputFormat == ma_format_f32) {
@@ -676,8 +639,6 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     ma_vars->pb_state &= ~PB_PAUSED;
     ma_vars->pb_state |= PB_PLAYING;
 }
-
-
 
 bool check_file_mp3(const char *file) {
     size_t len = strlen(file);

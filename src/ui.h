@@ -20,9 +20,9 @@ typedef enum {
 } mouse_state;
 
 typedef struct {
-    vecf2d_t       pos;
-    mouse_button   button;
-    mouse_state    state;
+    vecf2d_t     pos;
+    mouse_button button;
+    mouse_state  state;
 } mouse_t;
 
 typedef enum {
@@ -68,7 +68,6 @@ box_t *create_box(SDL_Renderer *renderer,
                   SDL_Color text_color, 
                   TTF_Font *font, 
                   u32 flags);
-void init_ui(SDL_Renderer *renderer);
 void update_box_arr(mouse_t mouse);
 void render_box_arr(SDL_Renderer *renderer);
 void new_font_texture(SDL_Renderer *renderer, box_t *box, char *new_text);

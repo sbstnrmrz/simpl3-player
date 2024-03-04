@@ -4,17 +4,7 @@
 #include "defs.h"
 #include "ui.h"
 
-typedef enum {
-    SINE,
-    SQUARE,
-    SAWTOOTH,
-    TRIANGLE
-} waveType;
-
-
-
 // Audio
-void rec_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount);
 void pb_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount);
 void dft(float *in, cmplx *out, size_t n);
 void fft(float in[], size_t stride, cmplx out[], size_t n);
@@ -28,10 +18,6 @@ f32 maxf(f32 x, f32 y);
 i32 max_arr(i32 *arr, size_t n);
 f32 maxf_arr(f32 *arr, size_t n);
 f32 *auto_correlate(f32 *frames, size_t n);
-f32 sine_wave(f32 phase);
-f32 square_wave(f32 phase);
-f32 sawtooth_wave(f32 phase);
-f32 triangle_wave(f32 phase);
 void draw_wave(SDL_Renderer *renderer);
 void update_pb(ma_vars_t *ma_vars, mouse_t mouse);
 void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars);

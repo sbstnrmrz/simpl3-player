@@ -72,20 +72,11 @@ typedef enum {
 } pb_state;
 
 typedef enum {
-    REC_RECORDING,
-    REC_PAUSED,
-    REC_ENDED,
-} rec_state;
-
-typedef enum {
     ERROR_NOCOMMAND = -2,
     ERROR_FILETYPE = -1,
     PLAYBACK_WAV = 1,
     PLAYBACK_MP3,
     PLAYBACK_FLAC,
-    RECORD_DEFAULT,
-    RECORD_WAV,
-    DUPLEX,
     PRINT_HELP,
     PRINT_VERSION
 } parse_result;
@@ -114,24 +105,13 @@ typedef struct {
 } pb_info;
 
 typedef struct {
-    const char *filename;
-    const char *format;
-    u32 sample_rate;
-    u32 channels;
-} rec_info;
-
-typedef struct {
     ma_context        context;
-    ma_encoder        encoder;
-    ma_encoder_config encoderConfig;
     ma_decoder        decoder;
-    ma_decoder_config decoderConfig;
+    ma_decoder_config decoder_config;
     ma_device         device;
-    ma_device_config  deviceConfig;
+    ma_device_config  device_config;
     pb_info           pb_info;
     pb_state          pb_state;
-    rec_info          rec_info;
-    rec_state         rec_state;
     playlist_t        playlist;
 } ma_vars_t;
 
