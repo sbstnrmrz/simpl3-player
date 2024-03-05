@@ -773,14 +773,12 @@ void print_pb_info(pb_info pb_info) {
     printf("  Format: %s\n", pb_info.current_mp3.format);
     printf("  Sample rate: %uhz\n", pb_info.current_mp3.sample_rate);
     printf("  Channels: %u\n", pb_info.current_mp3.channels);
-    printf("  Duration: ");
-    print_time_24hrs(frames_to_ms);
-    printf("\n  Frames cursor: %llu\n", pb_info.cursor);
+    printf("  Duration: %s\n", time_24hrs(frames_to_ms));
+    printf("  Frames cursor: %llu\n", pb_info.cursor);
     printf("  Last frames cursor: %llu\n", pb_info.last_cursor);
-    printf("  Progress: "); 
-    print_time_24hrs(cursor_to_ms);
+    printf("  Progress: %s", time_24hrs(cursor_to_ms)); 
 
-    printf("\n\n");
+    printf("\n");
 }
 
 void print_pb_state(pb_state pb_state) {

@@ -37,8 +37,18 @@ void update_clock(Clock *clock) {
 void print_time_24hrs(u32 ms) {
     u32 sec = ms % 60;
     u32 min = ms / 60;
-    u32 hr = ms / 3600;
+    u32 hr  = ms / 3600;
     printf("%02u:%02u:%02u", hr, min, sec);
+}
+
+char *time_24hrs(u32 ms) {
+    char *result = malloc(sizeof(char) * 10);
+    u32 sec = ms % 60;
+    u32 min = ms / 60;
+    u32 hr  = ms / 3600;
+    sprintf(result, "%02u:%02u:%02u", hr, min, sec);
+
+    return result;
 }
 
 u64 get_clock_time_min(Clock clock) {

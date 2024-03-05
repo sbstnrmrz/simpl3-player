@@ -21,6 +21,7 @@ void pause_clock(Clock *clock);
 void stop_clock(Clock *clock);
 void update_clock(Clock *clock);
 void print_time_24hrs(u32 ms);
+char *time_24hrs(u32 ms);
 u64 get_clock_time_sec(Clock clock);
 u64 get_clock_time_min(Clock clock);
 u64 get_clock_time_hr(Clock clock);
