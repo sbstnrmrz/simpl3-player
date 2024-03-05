@@ -376,6 +376,8 @@ void unpause_pb(pb_state *state) {
 
 void repos_buttons() {
     progress_bar->rect.x     = (sidebar_box->rect.x + sidebar_box->rect.w) + ((WIN_WIDTH - (sidebar_box->rect.x +sidebar_box->rect.w)) - progress_bar->rect.w)/2;
+    time_left_box->rect.x    = (progress_bar->rect.x - time_left_box->rect.w) - 32;
+    total_time_box->rect.x   = (progress_bar->rect.x + progress_bar->rect.w) + 32;
     play_button->rect.x      = (progress_bar->rect.x) + (progress_bar->rect.w - play_button->rect.w)/2;
     prev_song_button->rect.x = play_button->rect.x - play_button->rect.w * 2;
     next_song_button->rect.x = play_button->rect.x + play_button->rect.w * 2;
@@ -418,8 +420,8 @@ void update_pb(ma_vars_t *ma_vars, mouse_t mouse) {
             SDL_SetTextureColorMod(sidebar_box_arr[i]->font_texture, 255, 255, 255);
         }
     }
-
     SDL_SetTextureColorMod(sidebar_box_arr[ma_vars->playlist.current_mp3]->font_texture, 150, 150, 150);
+
 }
 
 void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) { 
@@ -676,6 +678,9 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
 
     ma_vars->pb_state &= ~PB_PAUSED;
     ma_vars->pb_state |= PB_PLAYING;
+
+    total_time_box->text = "1:00";
+    total_time_box->new_text = true;
 }
 
 bool check_file_mp3(const char *file) {

@@ -32,7 +32,8 @@ box_t *create_box(SDL_Renderer *renderer,
         } else {
             result->font = font;
         }
-        result->font_texture = create_font_texture(renderer, result->font, result->text, result->text_color);
+        result->font_texture = __new_font_texture(renderer, result, result->font, result->text, result->text_color);
+//        result->font_texture = create_font_texture(renderer, result->font, result->text, result->text_color);
         result->state |= BOX_TEXT_VISIBLE;
     } else {
         result->text = NULL;
@@ -75,6 +76,8 @@ void update_box_arr(mouse_t mouse) {
         }
     } 
 
+
+
 }
 
 // render boxes created by func create_box()
@@ -107,6 +110,12 @@ void render_box_arr(SDL_Renderer *renderer) {
             if (box_arr[i]->texture != NULL) {
                 SDL_RenderTexture(renderer, box_arr[i]->texture, NULL, &box_arr[i]->rect);
             }
+            if (box_arr[i]->new_text) {
+                box_arr[i]->font_texture = __new_font_texture(renderer, box_arr[i], box_arr[i]->font, box_arr[i]->text, box_arr[i]->text_color);
+
+                box_arr[i]->new_text = false;
+            }
+            
         }
 
     }
@@ -174,6 +183,52 @@ SDL_Texture *create_font_texture(SDL_Renderer *renderer, TTF_Font* font, const c
     return texture;
 }
 
+SDL_Texture *__new_font_texture(SDL_Renderer *renderer, box_t *box, TTF_Font *font, const char *text, SDL_Color text_color) {
+    if (box->font_texture != NULL) {
+        SDL_DestroyTexture(box->font_texture);
+        box->font_texture = NULL;
+    }
+
+    SDL_Surface *surface = TTF_RenderText_Solid(font, text, text_color);
+    if (surface == NULL) {
+        fprintf(stderr, "Error creating surface from font. SDL_Error: %s\n", SDL_GetError());
+        exit(1);
+    }
+
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (texture == NULL) {
+        fprintf(stderr, "Error creating texture from font surface. SDL_Error: %s\n", SDL_GetError());
+        exit(1);
+    }
+    SDL_DestroySurface(surface);
+
+    box->state |= BOX_TEXT_VISIBLE;
+
+    return texture;
+}
+
+// pass NULL as font to use DEFAULT_FONT(Sans Serif)
+void _new_font_texture(SDL_Renderer *renderer, box_t *box, TTF_Font *font, const char *new_text) {
+    if (box->font_texture != NULL) {
+        SDL_DestroyTexture(box->font_texture);
+        box->font_texture = NULL;
+    }
+
+    SDL_Surface *surface = TTF_RenderText_Solid(font, new_text, box->text_color);
+    if (surface == NULL) {
+        fprintf(stderr, "Error creating surface from font. SDL_Error: %s\n", SDL_GetError());
+        exit(1);
+    }
+
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (texture == NULL) {
+        fprintf(stderr, "Error creating texture from font surface. SDL_Error: %s\n", SDL_GetError());
+        exit(1);
+    }
+    SDL_DestroySurface(surface);
+
+}
+
 void new_font_texture(SDL_Renderer *renderer, box_t *box, char *new_text) {
     SDL_DestroyTexture(box->font_texture);
     box->font_texture = NULL;
@@ -214,6 +269,7 @@ void anim_expand_box(box_t *box) {
 }
 
 void update_animations(SDL_Renderer *renderer) {
+
 }
 
 SDL_Texture *load_svg(SDL_Renderer *renderer, const char *svg_file) {
