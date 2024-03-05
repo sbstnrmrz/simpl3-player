@@ -247,7 +247,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               "0:00",
                               WHITE,
                               NULL,
-                              BOX_VISIBLE | BOX_BORDER
+                              BOX_VISIBLE
                   ); 
 
     total_time_box = create_box(renderer, 
@@ -262,7 +262,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               "0:00",
                               WHITE,
                               NULL,
-                              BOX_VISIBLE | BOX_BORDER
+                              BOX_VISIBLE
                   ); 
 
     play_button = create_box(renderer, 
@@ -421,6 +421,9 @@ void update_pb(ma_vars_t *ma_vars, mouse_t mouse) {
         }
     }
     SDL_SetTextureColorMod(sidebar_box_arr[ma_vars->playlist.current_mp3]->font_texture, 150, 150, 150);
+
+    time_left_box->text = time_24hrs(ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate)+3;
+    time_left_box->new_text = true;
 
 }
 
@@ -679,7 +682,7 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     ma_vars->pb_state &= ~PB_PAUSED;
     ma_vars->pb_state |= PB_PLAYING;
 
-    total_time_box->text = "1:00";
+    total_time_box->text = time_24hrs(ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate)+3;
     total_time_box->new_text = true;
 }
 

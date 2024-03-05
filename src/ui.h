@@ -4,7 +4,7 @@
 #include "defs.h"
 #include "clock.h"
 
-#define DEFAULT_FONT TTF_OpenFont("assets/fonts/FreeSans.ttf", 128)
+#define DEFAULT_FONT TTF_OpenFont("assets/fonts/FreeSans.ttf", 48)
 
 typedef enum {
     MB_NONE         = 0,
@@ -33,6 +33,12 @@ typedef enum {
     BOX_COLOR_FILL = 8,
     BOX_BORDER = 16,
 } box_state;
+
+typedef struct {
+  SDL_FRect rect;
+  SDL_Color rect_color;
+  box_state state;
+} _box_t;
 
 typedef struct {
     SDL_FRect    rect;
