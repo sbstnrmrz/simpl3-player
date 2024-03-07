@@ -179,12 +179,30 @@ f32* auto_correlate(f32 *samples, size_t n) {
 i32 pb_input(SDL_Event event, ma_vars_t *ma_vars) {
     f32 sec = ((f32)ma_vars->pb_info.cursor/SAMPLE_RATE);
     if (event.type == SDL_EVENT_KEY_DOWN) {
+        // CHECK CHECK CHECK
         if (event.key.keysym.sym == SDLK_RIGHT) {
-            ma_vars->pb_info.last_cursor = ma_vars->pb_info.cursor;
-            printf("last: %llu\n", ma_vars->pb_info.last_cursor);
+            pause_pb(&ma_vars->pb_state);
+            i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate) + 5;
+            if (t+5 >= ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate) {
+                t = ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate;
+            } else {
+                t += 5;
+            }
+            ma_vars->pb_info.cursor = t * ma_vars->pb_info.current_mp3.sample_rate;
+            ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, ma_vars->pb_info.cursor);
+            unpause_pb(&ma_vars->pb_state);
         }
         if (event.key.keysym.sym == SDLK_LEFT) {
-            ma_vars->pb_info.last_cursor = ma_vars->pb_info.cursor;
+            pause_pb(&ma_vars->pb_state);
+            i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);
+            if (t-5 <= 0) {
+                t = 0;
+            } else {
+                t -= 5;
+            }
+            ma_vars->pb_info.cursor = t * ma_vars->pb_info.current_mp3.sample_rate;
+            ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, ma_vars->pb_info.cursor);
+            unpause_pb(&ma_vars->pb_state);
         }
 
     } else if (event.type == SDL_EVENT_KEY_UP) {
