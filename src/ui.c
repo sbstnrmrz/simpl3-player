@@ -4,66 +4,6 @@
 box_t **box_arr = NULL;
 size_t box_arr_size = 0;
 
-//box_t *create_box(SDL_Renderer *renderer, 
-//                  SDL_FRect rect, 
-//                  SDL_Color rect_color, 
-//                  SDL_Texture *texture, 
-//                  const char *text, 
-//                  SDL_Color text_color, 
-//                  TTF_Font *font, 
-//                  u32 flags) 
-//{
-//    box_t *result = malloc(sizeof(box_t));
-//
-//    result->rect = rect;
-//    result->rect_color = rect_color;
-//
-//    if (texture != NULL) {
-//        result->texture = texture;
-//    } else {
-//        result->texture = NULL;
-//    }
-//
-//    if (text != NULL) {
-//        strcpy(result->text, text);
-//        result->text_color = text_color;
-//        if (font == NULL) {
-//            result->font = DEFAULT_FONT;
-//        } else {
-//            result->font = font;
-//        }
-//        result->font_texture = __new_font_texture(renderer, result, result->font, result->text, result->text_color);
-////        result->font_texture = create_font_texture(renderer, result->font, result->text, result->text_color);
-//        result->state |= BOX_TEXT_VISIBLE;
-//    } else {
-////        result->text = NULL;
-//        result->font = NULL;
-//        result->font_texture = NULL;
-//    }
-//
-//    if (flags == BOX_NONE) {
-//        result->state |= BOX_VISIBLE;
-//    } else {
-//        result->state |= flags;
-//    }
-//    
-//    result->anim_clock = (Clock) {
-//        .state = CLK_STOPPED,
-//        .start_ms = 0,
-//        .current_ms = 0
-//    };
-//
-//    result->id = box_arr_size;
-//
-//    box_arr = realloc(box_arr, sizeof(box_t) * (box_arr_size+1));      
-//    box_arr[box_arr_size] = malloc(sizeof(box_t));
-//    box_arr[box_arr_size] = result;
-//    box_arr_size++;
-//
-//    return result;
-//}
-
-
 box_t *create_box(SDL_Renderer *renderer, 
                   SDL_FRect rect, 
                   SDL_Color rect_color, 
