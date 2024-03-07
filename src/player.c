@@ -64,126 +64,126 @@ void pb_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint3
     (void)pInput;
 }
 
-void dft(float *in, cmplx *out, size_t n) {
-    for (size_t f = 0; f < n; f++) {
-        out[f] = 0;
-        for (size_t i = 0; i < n; i++) {
-            f32 t = (f32)i/n;
-            out[f] += in[i] * cexp(I * 2.0f * PI * f * t);
-        }
-    }
+//void dft(float *in, cmplx *out, size_t n) {
+//    for (size_t f = 0; f < n; f++) {
+//        out[f] = 0;
+//        for (size_t i = 0; i < n; i++) {
+//            f32 t = (f32)i/n;
+//            out[f] += in[i] * cexp(I * 2.0f * PI * f * t);
+//        }
+//    }
+//
+//}
+//
+//void fft(float in[], size_t stride, cmplx out[], size_t n) {
+//    if (n == 1) {
+//        out[0] = in[0];
+//        return;
+//    }
+//
+//    fft(in, stride*2, out, n/2);
+//    fft(in + stride, stride*2,  out + n/2, n/2);
+//
+//    for (size_t k = 0; k < n/2; ++k) {
+//        float t = (float)k/n;
+//        cmplx v = cexp(-2*I*PI*t) * out[k + n/2];
+//        cmplx e = out[k];
+//        out[k]       = e + v; 
+//        out[k + n/2] = e - v;
+//    }
+///*
+//    for (int i = 0; i < n; i++) {
+//        for (int j = 0; j < n/2; j++)) {
+//            float t = (float)k/n;
+//            cmplx v = cexp(-2*I*PI*t) * out[k + n/2];
+//            cmplx e = out[k];
+//            out[k]       = e + v; 
+//            out[k + n/2] = e - v;
+//        }
+//
+//    }  
+//    out[0] = in[0];
+//*/
+//}
+//
+//int remove_fft_zeros(cmplx *in, cmplx *out, size_t fft_size, size_t *new_fft_size) {
+//    size_t size = 0;
+//    out = 0;
+//    for (size_t i = 0; i < fft_size; i++) {
+//        if (get_cmplx_frame_amp(fft_out[i], true) <= 0) {
+//            continue; 
+//        } 
+//        out = realloc(out, (size+1) * sizeof(cmplx));
+//        out[size] = in[i];
+//        size++;
+//    }
+//    *new_fft_size = size;
+//
+//    return size;
+//}
+//
+//f32 get_cmplx_frame_amp(cmplx frame, bool abs) {
+//    f32 a = 0;
+//    f32 b = 0;
+//
+//    if (abs) {
+//        a = fabsf(crealf(frame));
+//        b = fabsf(cimagf(frame));
+//    } else {
+//        a = crealf(frame);
+//        b = cimagf(frame);
+//    }
+//
+//    return a > b ? a : b;
+//}
+//
+//f32 get_zero_crossings(f32 samples[], size_t samples_size) {
+//    f32 result = 0;
+//    for (size_t i = 1; i < samples_size; i++) {
+//        if (samples[i] * samples[i-1] <= 0) {
+//            result++;
+//        }
+//    } 
+//    return result;
+//}
+//
+//f32 maxf_arr(f32 *arr, size_t n) {
+//    f32 result = 0;
+//    for (size_t i = 0; i < n; i++) {
+//        if (arr[i] > result) {
+//            result = arr[i];
+//        }
+//    }
+//
+//    return result;
+//}
+//
+//f32 max_abs_scale(f32 *x, size_t n) {
+//    f32 result = maxf_arr(x, n);
+//    return result / fabs(result);
+//}
+//
+//f32* auto_correlate(f32 *samples, size_t n) {
+//    f32 *result = (f32*)malloc(n * sizeof(f32));
+//    for (size_t i = 0; i < n; i++) {
+//        f32 sum = 0.0f;
+//        for (size_t j = 0; j < n-i-1; j++) {
+//            sum += (samples[j] * samples[j + i]); 
+//        }
+//        result[i] = sum;
+//    }
+//
+//    return result;
+//}
 
-}
-
-void fft(float in[], size_t stride, cmplx out[], size_t n) {
-    if (n == 1) {
-        out[0] = in[0];
-        return;
-    }
-
-    fft(in, stride*2, out, n/2);
-    fft(in + stride, stride*2,  out + n/2, n/2);
-
-    for (size_t k = 0; k < n/2; ++k) {
-        float t = (float)k/n;
-        cmplx v = cexp(-2*I*PI*t) * out[k + n/2];
-        cmplx e = out[k];
-        out[k]       = e + v; 
-        out[k + n/2] = e - v;
-    }
-/*
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n/2; j++)) {
-            float t = (float)k/n;
-            cmplx v = cexp(-2*I*PI*t) * out[k + n/2];
-            cmplx e = out[k];
-            out[k]       = e + v; 
-            out[k + n/2] = e - v;
-        }
-
-    }  
-    out[0] = in[0];
-*/
-}
-
-int remove_fft_zeros(cmplx *in, cmplx *out, size_t fft_size, size_t *new_fft_size) {
-    size_t size = 0;
-    out = 0;
-    for (size_t i = 0; i < fft_size; i++) {
-        if (get_cmplx_frame_amp(fft_out[i], true) <= 0) {
-            continue; 
-        } 
-        out = realloc(out, (size+1) * sizeof(cmplx));
-        out[size] = in[i];
-        size++;
-    }
-    *new_fft_size = size;
-
-    return size;
-}
-
-f32 get_cmplx_frame_amp(cmplx frame, bool abs) {
-    f32 a = 0;
-    f32 b = 0;
-
-    if (abs) {
-        a = fabsf(crealf(frame));
-        b = fabsf(cimagf(frame));
-    } else {
-        a = crealf(frame);
-        b = cimagf(frame);
-    }
-
-    return a > b ? a : b;
-}
-
-f32 get_zero_crossings(f32 samples[], size_t samples_size) {
-    f32 result = 0;
-    for (size_t i = 1; i < samples_size; i++) {
-        if (samples[i] * samples[i-1] <= 0) {
-            result++;
-        }
-    } 
-    return result;
-}
-
-f32 maxf_arr(f32 *arr, size_t n) {
-    f32 result = 0;
-    for (size_t i = 0; i < n; i++) {
-        if (arr[i] > result) {
-            result = arr[i];
-        }
-    }
-
-    return result;
-}
-
-f32 max_abs_scale(f32 *x, size_t n) {
-    f32 result = maxf_arr(x, n);
-    return result / fabs(result);
-}
-
-f32* auto_correlate(f32 *samples, size_t n) {
-    f32 *result = (f32*)malloc(n * sizeof(f32));
-    for (size_t i = 0; i < n; i++) {
-        f32 sum = 0.0f;
-        for (size_t j = 0; j < n-i-1; j++) {
-            sum += (samples[j] * samples[j + i]); 
-        }
-        result[i] = sum;
-    }
-
-    return result;
-}
-
-i32 pb_input(SDL_Event event, ma_vars_t *ma_vars) {
+i32 pb_input(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars) {
     f32 sec = ((f32)ma_vars->pb_info.cursor/SAMPLE_RATE);
     if (event.type == SDL_EVENT_KEY_DOWN) {
         // CHECK CHECK CHECK
         if (event.key.keysym.sym == SDLK_RIGHT) {
             pause_pb(&ma_vars->pb_state);
             i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate) + 5;
-            if (t+5 >= ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate) {
+            if (t+5 >= (i32)(ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate)) {
                 t = ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate;
             } else {
                 t += 5;
@@ -213,10 +213,10 @@ i32 pb_input(SDL_Event event, ma_vars_t *ma_vars) {
     if (event.type == SDL_EVENT_DROP_FILE) {
         const char *file = event.drop.data;
         printf("Dropped: %s\n", file);
+        add_mp3_to_playlist(renderer, ma_vars, file);
 
     }
 
-    SDL_DropEvent e = {0};
     return 0;
 }
 
@@ -365,25 +365,26 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               BOX_VISIBLE
                               ); 
 
-    sidebar_box_arr_size = ma_vars->playlist.mp3_list_size;
-    sidebar_box_arr = malloc(sizeof(box_t*) * sidebar_box_arr_size);
+//    sidebar_box_arr_size = ma_vars->playlist.mp3_list_size;
+//    sidebar_box_arr = malloc(sizeof(box_t*) * sidebar_box_arr_size);
 
-    for (size_t i = 0; i < sidebar_box_arr_size; i++) {
-        char file[128] = {0};
-        strncpy(file, ma_vars->playlist.mp3_list[i].filename, strlen(ma_vars->playlist.mp3_list[i].filename)-4);
-        sidebar_box_arr[i] = create_box(renderer, 
-                                      (SDL_FRect) {
-                                        .x = 0,
-                                        .y = 0,
-                                        .w = 0,
-                                        .h = 0,
-                                      },
-                                        WHITE, 
-                                        NULL, 
-                                        file,//test_pl.mp3_list[i].filename, 
-                                        WHITE, 
-                                        NULL, 
-                                        BOX_BORDER);
+    for (size_t i = 0; i < ma_vars->playlist.mp3_list_size; i++) {
+//      char file[128] = {0};
+//      strncpy(file, ma_vars->playlist.mp3_list[i].filename, strlen(ma_vars->playlist.mp3_list[i].filename)-4);
+//      sidebar_box_arr[i] = create_box(renderer, 
+//                                    (SDL_FRect) {
+//                                      .x = 0,
+//                                      .y = 0,
+//                                      .w = 0,
+//                                      .h = 0,
+//                                    },
+//                                      WHITE, 
+//                                      NULL, 
+//                                      file,//test_pl.mp3_list[i].filename, 
+//                                      WHITE, 
+//                                      NULL, 
+//                                      BOX_BORDER);
+        new_sidebar_item(renderer, ma_vars);
     }
     ma_vars->pb_state |= PB_ONCE;
     play_mp3(ma_vars->playlist.mp3_list[ma_vars->playlist.current_mp3], ma_vars);
@@ -615,65 +616,67 @@ void render_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
 
 }
 
-void draw_wave(SDL_Renderer *renderer) {
-    SDL_SetRenderDrawColor(renderer, WHITE.r, WHITE.g, WHITE.b, WHITE.a);
-    f32 max_amp = 0;
-    f32 min_amp = INT32_MAX;
-    
-    for (size_t i = 0; i < frames_size; i++) {
-       if (get_cmplx_frame_amp(fft_out[i], true) > max_amp) {
-           max_amp = get_cmplx_frame_amp(fft_out[i], true); 
-       } 
-       if (get_cmplx_frame_amp(fft_out[i], true) < min_amp) {
-           min_amp = get_cmplx_frame_amp(fft_out[i], true); 
-       } 
-    }
+//void draw_wave(SDL_Renderer *renderer) {
+//    SDL_SetRenderDrawColor(renderer, WHITE.r, WHITE.g, WHITE.b, WHITE.a);
+//    f32 max_amp = 0;
+//    f32 min_amp = INT32_MAX;
+//    
+//    for (size_t i = 0; i < frames_size; i++) {
+//       if (get_cmplx_frame_amp(fft_out[i], true) > max_amp) {
+//           max_amp = get_cmplx_frame_amp(fft_out[i], true); 
+//       } 
+//       if (get_cmplx_frame_amp(fft_out[i], true) < min_amp) {
+//           min_amp = get_cmplx_frame_amp(fft_out[i], true); 
+//       } 
+//    }
+//
+//    size_t fft_woz_size = 0;
+//    for (size_t i = 0; i < frames_size; i++) {
+//        if (get_cmplx_frame_amp(fft_out[i], true) <= 0) {
+//            continue; 
+//        } 
+//        fft_out_woz = realloc(fft_out_woz, (fft_woz_size+1) * sizeof(cmplx));
+//        fft_out_woz[fft_woz_size] = fft_out[i];
+//        fft_woz_size++;
+//    }
+////  remove_fft_zeros(fft_out, fft_out_woz, frames_size, &fft_woz_size);
+//
+//    size_t N = fft_woz_size/2;//frames_size;
+//    f32 cell_w = (f32)WIN_WIDTH / N; 
+//    for (size_t i = 0; i < N; i++) {
+//        f32 t = get_cmplx_frame_amp(fft_out_woz[i], 1);
+//        SDL_FRect rect = {
+//            .x = i * cell_w,
+//            .y = WIN_HEIGHT - (WIN_HEIGHT * t),
+//            .w = cell_w,
+//            .h = (WIN_HEIGHT) * t  
+//        };
+//        SDL_RenderFillRect(renderer, &rect);
+//        SDL_RenderRect(renderer, &rect); 
+//    }
+//
+////  f32* cor = auto_correlate(in, frames_size);
+////  f32 cell_w = (f32)WIN_WIDTH / frames_size;
+////  for (size_t i = 0; i < frames_size; i++) {
+////      f32 t = cor[i];
+////      SDL_FRect rect = {
+////          .x = i * cell_w,
+////          .y = WIN_HEIGHT/2,
+////          .w = cell_w,
+////          .h = (WIN_HEIGHT) * t  
+////      };
+////      SDL_RenderFillRect(renderer, &rect);
+////      SDL_RenderRect(renderer, &rect); 
+////  }
+//
+////    f32 crossings = get_zero_crossings(cor, frames_size)-1;
+////  f32 cycles = crossings / 2.0f;
+////  f32 t = (f32)frames_size/SAMPLE_RATE;
+////  printf("freq?: %f\n", cycles / t);
+//    
+//}
 
-    size_t fft_woz_size = 0;
-    for (size_t i = 0; i < frames_size; i++) {
-        if (get_cmplx_frame_amp(fft_out[i], true) <= 0) {
-            continue; 
-        } 
-        fft_out_woz = realloc(fft_out_woz, (fft_woz_size+1) * sizeof(cmplx));
-        fft_out_woz[fft_woz_size] = fft_out[i];
-        fft_woz_size++;
-    }
-//  remove_fft_zeros(fft_out, fft_out_woz, frames_size, &fft_woz_size);
 
-    size_t N = fft_woz_size/2;//frames_size;
-    f32 cell_w = (f32)WIN_WIDTH / N; 
-    for (size_t i = 0; i < N; i++) {
-        f32 t = get_cmplx_frame_amp(fft_out_woz[i], 1);
-        SDL_FRect rect = {
-            .x = i * cell_w,
-            .y = WIN_HEIGHT - (WIN_HEIGHT * t),
-            .w = cell_w,
-            .h = (WIN_HEIGHT) * t  
-        };
-        SDL_RenderFillRect(renderer, &rect);
-        SDL_RenderRect(renderer, &rect); 
-    }
-
-//  f32* cor = auto_correlate(in, frames_size);
-//  f32 cell_w = (f32)WIN_WIDTH / frames_size;
-//  for (size_t i = 0; i < frames_size; i++) {
-//      f32 t = cor[i];
-//      SDL_FRect rect = {
-//          .x = i * cell_w,
-//          .y = WIN_HEIGHT/2,
-//          .w = cell_w,
-//          .h = (WIN_HEIGHT) * t  
-//      };
-//      SDL_RenderFillRect(renderer, &rect);
-//      SDL_RenderRect(renderer, &rect); 
-//  }
-
-//    f32 crossings = get_zero_crossings(cor, frames_size)-1;
-//  f32 cycles = crossings / 2.0f;
-//  f32 t = (f32)frames_size/SAMPLE_RATE;
-//  printf("freq?: %f\n", cycles / t);
-    
-}
 
 void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     ma_result err = {0};
@@ -758,6 +761,7 @@ playlist_t create_playlist(const char *dir_name) {
             if (check_file_mp3(de->d_name)) {
                 result.mp3_list = realloc(result.mp3_list, sizeof(mp3_t) * (result.mp3_list_size+1));
                 strcpy(result.mp3_list[result.mp3_list_size].filename, de->d_name); 
+                char str[128] = {0};
                 strcpy(result.mp3_list[result.mp3_list_size].dir, dir_name);
                 printf("result %zu: %s\n", result.mp3_list_size, result.mp3_list[result.mp3_list_size].filename);
                 result.mp3_list_size++;
@@ -768,6 +772,47 @@ playlist_t create_playlist(const char *dir_name) {
     closedir(dir);
 
     return result;
+}
+
+void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
+    sidebar_box_arr = realloc(sidebar_box_arr, sizeof(box_t*) * (sidebar_box_arr_size+1));
+    char file[128] = {0};
+    strncpy(file, ma_vars->playlist.mp3_list[sidebar_box_arr_size].filename, strlen(ma_vars->playlist.mp3_list[sidebar_box_arr_size].filename)-4);
+
+    sidebar_box_arr[sidebar_box_arr_size] = create_box(renderer, 
+                                  (SDL_FRect) {
+                                    .x = 0,
+                                    .y = 0,
+                                    .w = 0,
+                                    .h = 0,
+                                  },
+                                    WHITE, 
+                                    NULL, 
+                                    file,//test_pl.mp3_list[i].filename, 
+                                    WHITE, 
+                                    NULL, 
+                                    BOX_BORDER);
+    sidebar_box_arr_size++;
+}
+
+void add_mp3_to_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const char *filename) {
+    ma_vars->playlist.mp3_list = realloc(ma_vars->playlist.mp3_list, sizeof(mp3_t) * (ma_vars->playlist.mp3_list_size+1));
+    mp3_t mp3 = {
+        .frames = 0,
+        .sample_rate = 0,
+        .channels = 0
+    };
+
+    strcpy(mp3.dir, filename);
+    printf("Dir: %s\n", mp3.dir);
+    char *str = strrchr(filename, '/')+1;
+    strncpy(mp3.filename, str, strlen(str)-4);
+    printf("Name: %s\n", mp3.filename);
+
+    ma_vars->playlist.mp3_list[ma_vars->playlist.mp3_list_size] = mp3; 
+    ma_vars->playlist.mp3_list_size++;
+    new_sidebar_item(renderer, ma_vars);
+
 }
 
 void print_playlist(playlist_t playlist) {

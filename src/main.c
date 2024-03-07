@@ -162,7 +162,7 @@ void handle_events() {
         engine.running = false;
     }
     mouse_update(event, &engine.mouse);
-    pb_input(event, &ma_vars);
+    pb_input(event, engine.renderer, &ma_vars);
 
     if (event.type == SDL_EVENT_KEY_DOWN) {
         if (event.key.keysym.sym == SDLK_SPACE) {

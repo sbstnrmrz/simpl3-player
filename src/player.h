@@ -8,7 +8,7 @@
 void pb_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount);
 void dft(float *in, cmplx *out, size_t n);
 void fft(float in[], size_t stride, cmplx out[], size_t n);
-i32 pb_input(SDL_Event event, ma_vars_t *ma_vars);
+i32 pb_input(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars);
 int remove_fft_zeros(cmplx *in, cmplx *out, size_t fft_size, size_t *new_fft_size);
 f32 get_cmplx_frame_amp(cmplx frame, bool abs);
 f32 get_zero_crossings(f32 samples[], size_t samples_size);
@@ -30,7 +30,8 @@ void print_frames(f32 frames[], size_t framesSize);
 void print_fft_frame(cmplx fftFrame, size_t itr);
 void print_fft_frames(cmplx fftFrames[], size_t framesSize);
 
-void new_sidebar_item(SDL_Renderer *renderer);
+void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars);
+void add_mp3_to_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const char *filename);
 
 void open_sidebar(SDL_Renderer *renderer);
 void close_sidebar(SDL_Renderer *renderer);
