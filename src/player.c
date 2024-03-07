@@ -684,10 +684,11 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     ma_decoder_uninit(&ma_vars->decoder);
     pause_pb(&ma_vars->pb_state);
 
-    char *str = NULL;
-    str = strcat(mp3.dir, mp3.filename);
+//  char *str = NULL;
+//  str = strcat(mp3.dir, mp3.filename);
 
-    err = ma_decoder_init_file(str, &ma_vars->decoder_config, &ma_vars->decoder); 
+    printf("dir: %s\n", mp3.dir);
+    err = ma_decoder_init_file(mp3.dir, &ma_vars->decoder_config, &ma_vars->decoder); 
 
     if (err != MA_SUCCESS) {
         fprintf(stderr, "Failed to open '%s' mp3 file. MA_ERROR: %d\n", mp3.filename, err);
@@ -762,7 +763,10 @@ playlist_t create_playlist(const char *dir_name) {
                 result.mp3_list = realloc(result.mp3_list, sizeof(mp3_t) * (result.mp3_list_size+1));
                 strcpy(result.mp3_list[result.mp3_list_size].filename, de->d_name); 
                 char str[128] = {0};
-                strcpy(result.mp3_list[result.mp3_list_size].dir, dir_name);
+                strcpy(str, dir_name);
+                strcat(str, de->d_name);
+                strcpy(result.mp3_list[result.mp3_list_size].dir, str);
+                
                 printf("result %zu: %s\n", result.mp3_list_size, result.mp3_list[result.mp3_list_size].filename);
                 result.mp3_list_size++;
             }
@@ -804,10 +808,8 @@ void add_mp3_to_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const char 
     };
 
     strcpy(mp3.dir, filename);
-    printf("Dir: %s\n", mp3.dir);
     char *str = strrchr(filename, '/')+1;
     strncpy(mp3.filename, str, strlen(str)-4);
-    printf("Name: %s\n", mp3.filename);
 
     ma_vars->playlist.mp3_list[ma_vars->playlist.mp3_list_size] = mp3; 
     ma_vars->playlist.mp3_list_size++;
