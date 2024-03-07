@@ -9,7 +9,6 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
 void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars);
 
 void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars);
-
 void open_sidebar(SDL_Renderer *renderer);
 void close_sidebar(SDL_Renderer *renderer);
 void update_sidebar(SDL_Renderer *renderer, mouse_t mouse);

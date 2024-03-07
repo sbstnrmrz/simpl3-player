@@ -300,26 +300,6 @@ SDL_Texture *load_svg(SDL_Renderer *renderer, const char *svg_file) {
     return texture;
 }
 
-SDL_Texture *load_png(SDL_Renderer *renderer, const char *png_file) {
-    SDL_Surface *surface = IMG_Load(png_file);
-    if (surface == NULL) {
-        fprintf(stderr, "Error creating surface from SVG: %s. SDL_Error: %s\n", png_file, SDL_GetError());
-        exit(1);
-    }
-
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (texture == NULL) {
-        fprintf(stderr, "Error creating texture from surface. SDL_Error: %s\n", SDL_GetError());
-        exit(1);
-    }
-
-    printf("Texture from PNG: %s. Created succesfully\n", png_file);
-
-    SDL_DestroySurface(surface);
-
-    return texture;
-}
-
 void print_box_info() {
     if (box_arr_size > 0) {
         printf("[BOX INFO]\n");

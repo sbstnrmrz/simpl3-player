@@ -168,8 +168,6 @@ void update() {
     }
     mouse_update(event, &engine.mouse);
 
-
-
     update_box_arr(engine.mouse);
     update_sidebar(engine.renderer, engine.mouse);
     update_pb(event, engine.renderer, &ma_vars, engine.mouse);
