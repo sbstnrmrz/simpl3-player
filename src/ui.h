@@ -46,7 +46,7 @@ typedef struct {
     SDL_Texture *texture;
     SDL_FRect    text_rect;
     SDL_Color    text_color;
-    char        *text;
+    char         text[128];
     TTF_Font    *font;
     SDL_Texture *font_texture;
     Clock        anim_clock;

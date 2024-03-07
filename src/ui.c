@@ -4,6 +4,66 @@
 box_t **box_arr = NULL;
 size_t box_arr_size = 0;
 
+//box_t *create_box(SDL_Renderer *renderer, 
+//                  SDL_FRect rect, 
+//                  SDL_Color rect_color, 
+//                  SDL_Texture *texture, 
+//                  const char *text, 
+//                  SDL_Color text_color, 
+//                  TTF_Font *font, 
+//                  u32 flags) 
+//{
+//    box_t *result = malloc(sizeof(box_t));
+//
+//    result->rect = rect;
+//    result->rect_color = rect_color;
+//
+//    if (texture != NULL) {
+//        result->texture = texture;
+//    } else {
+//        result->texture = NULL;
+//    }
+//
+//    if (text != NULL) {
+//        strcpy(result->text, text);
+//        result->text_color = text_color;
+//        if (font == NULL) {
+//            result->font = DEFAULT_FONT;
+//        } else {
+//            result->font = font;
+//        }
+//        result->font_texture = __new_font_texture(renderer, result, result->font, result->text, result->text_color);
+////        result->font_texture = create_font_texture(renderer, result->font, result->text, result->text_color);
+//        result->state |= BOX_TEXT_VISIBLE;
+//    } else {
+////        result->text = NULL;
+//        result->font = NULL;
+//        result->font_texture = NULL;
+//    }
+//
+//    if (flags == BOX_NONE) {
+//        result->state |= BOX_VISIBLE;
+//    } else {
+//        result->state |= flags;
+//    }
+//    
+//    result->anim_clock = (Clock) {
+//        .state = CLK_STOPPED,
+//        .start_ms = 0,
+//        .current_ms = 0
+//    };
+//
+//    result->id = box_arr_size;
+//
+//    box_arr = realloc(box_arr, sizeof(box_t) * (box_arr_size+1));      
+//    box_arr[box_arr_size] = malloc(sizeof(box_t));
+//    box_arr[box_arr_size] = result;
+//    box_arr_size++;
+//
+//    return result;
+//}
+
+
 box_t *create_box(SDL_Renderer *renderer, 
                   SDL_FRect rect, 
                   SDL_Color rect_color, 
@@ -13,54 +73,58 @@ box_t *create_box(SDL_Renderer *renderer,
                   TTF_Font *font, 
                   u32 flags) 
 {
-    box_t *result = malloc(sizeof(box_t));
+    box_arr = realloc(box_arr, sizeof(box_t) * (box_arr_size+1));      
+    box_arr[box_arr_size] = malloc(sizeof(box_t));
 
-    result->rect = rect;
-    result->rect_color = rect_color;
+    box_arr[box_arr_size]->rect = rect;
+    box_arr[box_arr_size]->rect_color = rect_color;
 
     if (texture != NULL) {
-        result->texture = texture;
+        box_arr[box_arr_size]->texture = texture;
     } else {
-        result->texture = NULL;
+        box_arr[box_arr_size]->texture = NULL;
     }
 
     if (text != NULL) {
-        result->text = text;
-        result->text_color = text_color;
+        strcpy(box_arr[box_arr_size]->text, text);
+        box_arr[box_arr_size]->text_color = text_color;
         if (font == NULL) {
-            result->font = DEFAULT_FONT;
+            box_arr[box_arr_size]->font = DEFAULT_FONT;
         } else {
-            result->font = font;
+            box_arr[box_arr_size]->font = font;
         }
-        result->font_texture = __new_font_texture(renderer, result, result->font, result->text, result->text_color);
-//        result->font_texture = create_font_texture(renderer, result->font, result->text, result->text_color);
-        result->state |= BOX_TEXT_VISIBLE;
+//      box_arr[box_arr_size]->font_texture = __new_font_texture(renderer, 
+//                                                               box_arr[box_arr_size], 
+//                                                               box_arr[box_arr_size]->font, 
+//                                                               box_arr[box_arr_size]->text, 
+//                                                               box_arr[box_arr_size]->text_color);
+        box_arr[box_arr_size]->font_texture = create_font_texture(renderer, 
+                                                                  box_arr[box_arr_size]->font, 
+                                                                  box_arr[box_arr_size]->text, 
+                                                                  box_arr[box_arr_size]->text_color);
+        box_arr[box_arr_size]->state |= BOX_TEXT_VISIBLE;
     } else {
-        result->text = NULL;
-        result->font = NULL;
-        result->font_texture = NULL;
+//        result->text = NULL;
+        box_arr[box_arr_size]->font = NULL;
+        box_arr[box_arr_size]->font_texture = NULL;
     }
 
     if (flags == BOX_NONE) {
-        result->state |= BOX_VISIBLE;
+        box_arr[box_arr_size]->state |= BOX_VISIBLE;
     } else {
-        result->state |= flags;
+        box_arr[box_arr_size]->state |= flags;
     }
     
-    result->anim_clock = (Clock) {
+    box_arr[box_arr_size]->anim_clock = (Clock) {
         .state = CLK_STOPPED,
         .start_ms = 0,
         .current_ms = 0
     };
 
-    result->id = box_arr_size;
-
-    box_arr = realloc(box_arr, sizeof(box_t) * (box_arr_size+1));      
-    box_arr[box_arr_size] = malloc(sizeof(box_t));
-    box_arr[box_arr_size] = result;
+    box_arr[box_arr_size]->id = box_arr_size;
     box_arr_size++;
 
-    return result;
+    return box_arr[box_arr_size-1];
 }
 
 void update_box_arr(mouse_t mouse) {
@@ -111,7 +175,7 @@ void render_box_arr(SDL_Renderer *renderer) {
                 SDL_RenderTexture(renderer, box_arr[i]->texture, NULL, &box_arr[i]->rect);
             }
             if (box_arr[i]->new_text) {
-                box_arr[i]->font_texture = __new_font_texture(renderer, box_arr[i], box_arr[i]->font, box_arr[i]->text, box_arr[i]->text_color);
+                new_font_texture(renderer, box_arr[i], box_arr[i]->text);
 
                 box_arr[i]->new_text = false;
             }

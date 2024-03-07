@@ -244,7 +244,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               },
                               WHITE,
                               NULL,
-                              "0:00",
+                              "00:00:00",
                               WHITE,
                               NULL,
                               BOX_VISIBLE
@@ -259,7 +259,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               },
                               WHITE,
                               NULL,
-                              "0:00",
+                              "00:00:00",
                               WHITE,
                               NULL,
                               BOX_VISIBLE
@@ -343,7 +343,6 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
     sidebar_box_arr = malloc(sizeof(box_t*) * sidebar_box_arr_size);
 
     for (size_t i = 0; i < sidebar_box_arr_size; i++) {
-        sidebar_box_arr[i] = malloc(sizeof(box_t));
         char file[128] = {0};
         strncpy(file, ma_vars->playlist.mp3_list[i].filename, strlen(ma_vars->playlist.mp3_list[i].filename)-4);
         sidebar_box_arr[i] = create_box(renderer, 
@@ -412,7 +411,7 @@ void update_pb(ma_vars_t *ma_vars, mouse_t mouse) {
     for (size_t i = 0; i < sidebar_box_arr_size; i++) {
         if (sidebar_box_arr[i]->state & BOX_HOVERED) {
             SDL_SetTextureColorMod(sidebar_box_arr[i]->font_texture, 150, 150, 150);
-            if (mouse_clicked(mouse)) {
+            if (mouse_clicked(mouse) && i != ma_vars->playlist.current_mp3) {
                 play_mp3(ma_vars->playlist.mp3_list[i], ma_vars); 
                 ma_vars->playlist.current_mp3 = i;
             }
@@ -422,7 +421,9 @@ void update_pb(ma_vars_t *ma_vars, mouse_t mouse) {
     }
     SDL_SetTextureColorMod(sidebar_box_arr[ma_vars->playlist.current_mp3]->font_texture, 150, 150, 150);
 
-    time_left_box->text = time_24hrs(ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate)+3;
+    char time[10] = {0};
+    time_24hrs(time, ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);
+    strcpy(time_left_box->text, time+3);
     time_left_box->new_text = true;
 
 }
@@ -650,6 +651,8 @@ void draw_wave(SDL_Renderer *renderer) {
 
 void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     ma_result err = {0};
+    // CHECK CHECK CHECK
+    ma_decoder_uninit(&ma_vars->decoder);
     pause_pb(&ma_vars->pb_state);
 
     char *str = NULL;
@@ -682,7 +685,10 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     ma_vars->pb_state &= ~PB_PAUSED;
     ma_vars->pb_state |= PB_PLAYING;
 
-    total_time_box->text = time_24hrs(ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate)+3;
+    char time[10] = {0};
+
+    time_24hrs(time, ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate);
+    strcpy(total_time_box->text, time+3);
     total_time_box->new_text = true;
 }
 
@@ -769,6 +775,7 @@ void print_pb_info(pb_info pb_info) {
     u32 cursor_to_ms = pb_info.cursor / SAMPLE_RATE;
     u32 frames_to_ms = pb_info.current_mp3.frames / SAMPLE_RATE;
     char file[128] = {0};
+    char time[10] = {0};
     strncpy(file, pb_info.current_mp3.filename, strlen(pb_info.current_mp3.filename)-4);
 
     printf("[PLAYBACK INFO]\n");
@@ -776,10 +783,12 @@ void print_pb_info(pb_info pb_info) {
     printf("  Format: %s\n", pb_info.current_mp3.format);
     printf("  Sample rate: %uhz\n", pb_info.current_mp3.sample_rate);
     printf("  Channels: %u\n", pb_info.current_mp3.channels);
-    printf("  Duration: %s\n", time_24hrs(frames_to_ms));
+    time_24hrs(time, frames_to_ms);
+    printf("  Duration: %s\n", time);
     printf("  Frames cursor: %llu\n", pb_info.cursor);
     printf("  Last frames cursor: %llu\n", pb_info.last_cursor);
-    printf("  Progress: %s", time_24hrs(cursor_to_ms)); 
+    time_24hrs(time, cursor_to_ms);
+    printf("  Progress: %s", time); 
 
     printf("\n");
 }

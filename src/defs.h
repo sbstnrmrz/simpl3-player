@@ -72,6 +72,7 @@ typedef enum {
 } pb_state;
 
 typedef enum {
+    ERROR_NO_FILE = -3,
     ERROR_NOCOMMAND = -2,
     ERROR_FILETYPE = -1,
     PLAYBACK_WAV = 1,

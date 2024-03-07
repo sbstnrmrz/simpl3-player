@@ -239,26 +239,21 @@ int main(int argc, char *argv[]) {
         ma_vars.device_config.pUserData         = &ma_vars;
         
         ma_vars.playlist = create_playlist(argv[2]);
-//      mp3_t test = {0};
-//      strcpy(test.filename, argv[2]);
-//      play_mp3(test, &ma_vars);
+    }
 
-    }
-    if (parse == PRINT_HELP) {
-        print_help();
-        exit(1);
-    }
-    if (parse == PRINT_VERSION) {
-        print_version();
-        exit(1);
-    }
-    if (parse == ERROR_NOCOMMAND) {
-        fprintf(stderr, "No command provided! use -h to see commands\n");
-        exit(1);
-    }
-    if (parse == ERROR_FILETYPE) {
-        fprintf(stderr, "Unknown file type! only WAV, MP3 and FLAC suported\n");
-        exit(1);
+    switch (parse) {
+        case ERROR_NO_FILE:
+            fprintf(stderr, "No mp3 file or directory provided\n");
+            exit(1);
+            break;
+        case PRINT_HELP:
+            print_help();
+            exit(1);
+            break;
+        case PRINT_VERSION:
+            print_version();
+            exit(1);
+            break;
     }
 
     if (ma_context_init(NULL, 0, NULL, &ma_vars.context) != MA_SUCCESS) {
