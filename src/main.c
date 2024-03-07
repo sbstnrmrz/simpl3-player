@@ -155,6 +155,11 @@ void init_sdl(const char *title, int win_width, int win_height, u32 flags) {
 }
 
 void handle_events() {
+
+
+}
+
+void update() {
     SDL_Event event;
     SDL_PollEvent(&event);
 
@@ -162,28 +167,12 @@ void handle_events() {
         engine.running = false;
     }
     mouse_update(event, &engine.mouse);
-    pb_input(event, engine.renderer, &ma_vars);
 
-    if (event.type == SDL_EVENT_KEY_DOWN) {
-        if (event.key.keysym.sym == SDLK_SPACE) {
-            if (ma_vars.pb_state & PB_PLAYING) {
-                ma_vars.pb_state &= ~PB_PLAYING;
-                ma_vars.pb_state |= PB_PAUSED;
-            } else {
-                ma_vars.pb_state &= ~PB_PAUSED;
-                ma_vars.pb_state |= PB_PLAYING;
-            }
-        }
-    } else if (event.type == SDL_EVENT_KEY_UP) {
 
-    } 
 
-}
-
-void update() {
     update_box_arr(engine.mouse);
     update_sidebar(engine.renderer, engine.mouse);
-    update_pb(&ma_vars, engine.mouse);
+    update_pb(event, engine.renderer, &ma_vars, engine.mouse);
 }
 
 void render() {
