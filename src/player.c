@@ -1,4 +1,5 @@
 #include "player.h"
+#include "SDL3/SDL_events.h"
 #include "clock.h"
 #include "defs.h"
 #include "ui.h"
@@ -191,6 +192,13 @@ i32 pb_input(SDL_Event event, ma_vars_t *ma_vars) {
 
     }
 
+    if (event.type == SDL_EVENT_DROP_FILE) {
+        const char *file = event.drop.data;
+        printf("Dropped: %s\n", file);
+
+    }
+
+    SDL_DropEvent e = {0};
     return 0;
 }
 

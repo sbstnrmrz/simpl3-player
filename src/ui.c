@@ -93,15 +93,12 @@ box_t *create_box(SDL_Renderer *renderer,
         } else {
             box_arr[box_arr_size]->font = font;
         }
-//      box_arr[box_arr_size]->font_texture = __new_font_texture(renderer, 
-//                                                               box_arr[box_arr_size], 
-//                                                               box_arr[box_arr_size]->font, 
-//                                                               box_arr[box_arr_size]->text, 
-//                                                               box_arr[box_arr_size]->text_color);
-        box_arr[box_arr_size]->font_texture = create_font_texture(renderer, 
-                                                                  box_arr[box_arr_size]->font, 
-                                                                  box_arr[box_arr_size]->text, 
-                                                                  box_arr[box_arr_size]->text_color);
+        box_arr[box_arr_size]->font_texture = __new_font_texture(renderer, 
+                                                                 box_arr[box_arr_size], 
+                                                                 box_arr[box_arr_size]->font, 
+                                                                 box_arr[box_arr_size]->text, 
+                                                                 box_arr[box_arr_size]->text_color);
+//        result->font_texture = create_font_texture(renderer, result->font, result->text, result->text_color);
         box_arr[box_arr_size]->state |= BOX_TEXT_VISIBLE;
     } else {
 //        result->text = NULL;
@@ -175,7 +172,7 @@ void render_box_arr(SDL_Renderer *renderer) {
                 SDL_RenderTexture(renderer, box_arr[i]->texture, NULL, &box_arr[i]->rect);
             }
             if (box_arr[i]->new_text) {
-                new_font_texture(renderer, box_arr[i], box_arr[i]->text);
+                box_arr[i]->font_texture = __new_font_texture(renderer, box_arr[i], box_arr[i]->font, box_arr[i]->text, box_arr[i]->text_color);
 
                 box_arr[i]->new_text = false;
             }

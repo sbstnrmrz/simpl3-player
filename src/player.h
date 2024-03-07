@@ -30,6 +30,8 @@ void print_frames(f32 frames[], size_t framesSize);
 void print_fft_frame(cmplx fftFrame, size_t itr);
 void print_fft_frames(cmplx fftFrames[], size_t framesSize);
 
+void new_sidebar_item(SDL_Renderer *renderer);
+
 void open_sidebar(SDL_Renderer *renderer);
 void close_sidebar(SDL_Renderer *renderer);
 void update_sidebar(SDL_Renderer *renderer, mouse_t mouse);
