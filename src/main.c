@@ -233,13 +233,6 @@ int main(int argc, char *argv[]) {
         ma_vars.device_config.dataCallback      = pb_callback;
         ma_vars.device_config.pUserData         = &ma_vars;
 
-        if (check_directory(argv[1])) {
-            printf("es un directorio\n");
-        }
-        
-        if (check_file_mp3(argv[1])) {
-            printf("es un mp3\n");
-        }
         ma_vars.playlist = create_playlist(argv[1]);
     }
 

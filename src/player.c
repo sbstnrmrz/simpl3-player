@@ -23,6 +23,7 @@ box_t **sidebar_box_arr = NULL;
 size_t sidebar_box_arr_size = 0;
 SDL_FRect sidebar_rect = {0};
 SDL_Texture *button_textures[9] = {0};
+bool sidebar_open = false;
 
 f32 progress_bar_h = 20;
 f32 progress_bar_w = 300;
@@ -87,32 +88,34 @@ void repos_buttons() {
 
 void open_sidebar(SDL_Renderer *renderer) {
     for (size_t i = 0; i < sidebar_box_arr_size; i++) {
-        sidebar_box_arr[i]->rect = (SDL_FRect) {
-                                        .w = sidebar_box->rect.w,
-                                        .h = sidebar_rect.h,
-                                        .x = 0,
-                                        .y = (sidebar_rect.y + sidebar_rect.h + sidebar_rect.y) + (i * sidebar_rect.h)
-                                    }; 
+//      sidebar_box_arr[i]->rect = (SDL_FRect) {
+//                                      .w = sidebar_box->rect.w,
+//                                      .h = sidebar_rect.h,
+//                                      .x = 0,
+//                                      .y = (sidebar_rect.y + sidebar_rect.h + sidebar_rect.y) + (i * sidebar_rect.h)
+//                                  }; 
         sidebar_box_arr[i]->state |= BOX_VISIBLE;
     }
 
+    sidebar_open = true;
 }
 
 void close_sidebar(SDL_Renderer *renderer) {
     for (size_t i = 0; i < sidebar_box_arr_size; i++) {
-        sidebar_box_arr[i]->rect = (SDL_FRect) {
-                                        .w = 0,
-                                        .h = 0,
-                                        .x = 0,
-                                        .y = 0 
-                                    }; 
+//      sidebar_box_arr[i]->rect = (SDL_FRect) {
+//                                      .w = 0,
+//                                      .h = 0,
+//                                      .x = 0,
+//                                      .y = 0 
+//                                  }; 
         sidebar_box_arr[i]->state &= ~BOX_VISIBLE;
     }
+    sidebar_open = false;
 
 }
 
 bool check_directory(const char *directory) {
-    struct stat st;
+    struct stat st = {0};
     if (stat(directory, &st) < 0) {
        fprintf(stderr, "Error checking directory with stat!\n"); 
        exit(1);
@@ -128,20 +131,22 @@ bool check_directory(const char *directory) {
 
 bool check_file_mp3(const char *file) {
     size_t len = strlen(file);
-
     if (!strcasecmp(file+(len-3), "mp3")) {
         return true;
+    } else {
+        return false;
     }
-    return false;
+
 }
 
 bool check_file_wav(const char *file) {
     size_t len = strlen(file);
     if (!strcasecmp(file+(len-3), "wav")) {
         return true;
+    } else {
+        return false;
     }
 
-    return false;
 }
 
 mp3_t new_mp3(const char *file_path) {
@@ -267,10 +272,14 @@ void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
 
     sidebar_box_arr[sidebar_box_arr_size] = create_box(renderer, 
                                   (SDL_FRect) {
+                                    .w = 200,//sidebar_box->rect.w,
+                                    .h = sidebar_rect.h,
                                     .x = 0,
-                                    .y = 0,
-                                    .w = 0,
-                                    .h = 0,
+                                    .y = (sidebar_rect.y + sidebar_rect.h + sidebar_rect.y) + (sidebar_box_arr_size * sidebar_rect.h),
+//                                  .x = 0,
+//                                  .y = 0,
+//                                  .w = 0,
+//                                  .h = 0,
                                   },
                                     WHITE, 
                                     NULL, 
@@ -278,6 +287,11 @@ void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                                     WHITE, 
                                     NULL, 
                                     BOX_BORDER);
+    if (sidebar_open) {
+         sidebar_box_arr[sidebar_box_arr_size]->state |= BOX_VISIBLE;   
+    }
+    printf("rect w: %.2f\n", sidebar_box->rect.w);
+    printf("rect h: %.2f\n", sidebar_box->rect.y);
     sidebar_box_arr_size++;
 }
 
@@ -311,11 +325,18 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
     button_textures[BUTTON_SHUFFLE] = IMG_LoadTexture(renderer, "assets/buttons/shuffle.png");
     button_textures[BUTTON_SIDEBAR] = IMG_LoadTexture(renderer, "assets/buttons/sidebar.png");
 
+    sidebar_rect = (SDL_FRect) {
+                        .w = 32, 
+                        .h = 32, 
+                        .x = 8, 
+                        .y = 8, 
+    }; 
+
     sidebar_box = create_box(renderer, 
                               (SDL_FRect) {
                                     .x = 0,
                                     .y = 0,
-                                    .w = 0,
+                                    .w = 200,
                                     .h = WIN_HEIGHT, 
                               },
                               WHITE,
@@ -453,12 +474,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
 }
 
 void update_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
-    sidebar_rect = (SDL_FRect) {
-                        .w = 32, 
-                        .h = 32, 
-                        .x = 8, 
-                        .y = 8, 
-    }; 
+
     if (check_mouse_rect_collision(mouse, sidebar_rect)) {
         SDL_SetTextureColorMod(button_textures[BUTTON_SIDEBAR], 150, 150, 150);
         if (mouse_clicked(mouse)) {
