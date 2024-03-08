@@ -59,9 +59,11 @@ int parse_args(int argc, char *argv[]) {
     }
 
     size_t len = strlen(argv[1]);
-    if (check_directory(argv[1]) && *argv[len-1] != '/') {
-        argv[2] = strcat(argv[1], "/"); 
+    if (check_directory(argv[1]) && *(argv[1]+len-1) != '/') {
+        argv[1] = strcat(argv[1], "/"); 
     }
+    printf("sirve\n");
+
 
 
 
@@ -227,19 +229,18 @@ int main(int argc, char *argv[]) {
         printf("Playback mode selected\n");
 
         ma_vars.decoder_config = ma_decoder_config_init(ma_format_f32, 2, 48000); 
-
         ma_vars.device_config = ma_device_config_init(ma_device_type_playback);
         ma_vars.device_config.dataCallback      = pb_callback;
         ma_vars.device_config.pUserData         = &ma_vars;
 
-        if (check_directory(argv[2])) {
+        if (check_directory(argv[1])) {
             printf("es un directorio\n");
         }
         
-        if (check_file_mp3(argv[2])) {
+        if (check_file_mp3(argv[1])) {
             printf("es un mp3\n");
         }
-        ma_vars.playlist = create_playlist(argv[2]);
+        ma_vars.playlist = create_playlist(argv[1]);
     }
 
     switch (parse) {

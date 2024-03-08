@@ -129,17 +129,9 @@ bool check_directory(const char *directory) {
 bool check_file_mp3(const char *file) {
     size_t len = strlen(file);
 
-    char *str = strrchr(file, '/');
-    if (str != NULL) {
-        if (!strcasecmp((str+1)+(len-3), "mp3")) {
-            return true;
-        }
-    } else {
-        if (!strcasecmp(file+(len-3), "mp3")) {
-            return true;
-        }
+    if (!strcasecmp(file+(len-3), "mp3")) {
+        return true;
     }
-
     return false;
 }
 
