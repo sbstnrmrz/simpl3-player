@@ -1,5 +1,4 @@
 #include "player.h"
-#include "SDL3/SDL_events.h"
 #include "clock.h"
 #include "defs.h"
 #include "ui.h"
@@ -61,6 +60,252 @@ void pb_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint3
     frames_size = frameCount;
 
     (void)pInput;
+}
+
+
+
+void pause_pb(pb_state *state) {
+    *state &= ~PB_PLAYING;
+    *state |= PB_PAUSED;
+}
+
+void unpause_pb(pb_state *state) {
+    *state &= ~PB_PAUSED;
+    *state |= PB_PLAYING;
+}
+
+void repos_buttons() {
+    progress_bar->rect.x     = (sidebar_box->rect.x + sidebar_box->rect.w) + ((WIN_WIDTH - (sidebar_box->rect.x +sidebar_box->rect.w)) - progress_bar->rect.w)/2;
+    time_left_box->rect.x    = (progress_bar->rect.x - time_left_box->rect.w) - 32;
+    total_time_box->rect.x   = (progress_bar->rect.x + progress_bar->rect.w) + 32;
+    play_button->rect.x      = (progress_bar->rect.x) + (progress_bar->rect.w - play_button->rect.w)/2;
+    prev_song_button->rect.x = play_button->rect.x - play_button->rect.w * 2;
+    next_song_button->rect.x = play_button->rect.x + play_button->rect.w * 2;
+    pb_state_button->rect.x  = play_button->rect.x;
+
+}
+
+void open_sidebar(SDL_Renderer *renderer) {
+    for (size_t i = 0; i < sidebar_box_arr_size; i++) {
+        sidebar_box_arr[i]->rect = (SDL_FRect) {
+                                        .w = sidebar_box->rect.w,
+                                        .h = sidebar_rect.h,
+                                        .x = 0,
+                                        .y = (sidebar_rect.y + sidebar_rect.h + sidebar_rect.y) + (i * sidebar_rect.h)
+                                    }; 
+        sidebar_box_arr[i]->state |= BOX_VISIBLE;
+    }
+
+}
+
+void close_sidebar(SDL_Renderer *renderer) {
+    for (size_t i = 0; i < sidebar_box_arr_size; i++) {
+        sidebar_box_arr[i]->rect = (SDL_FRect) {
+                                        .w = 0,
+                                        .h = 0,
+                                        .x = 0,
+                                        .y = 0 
+                                    }; 
+        sidebar_box_arr[i]->state &= ~BOX_VISIBLE;
+    }
+
+}
+
+bool check_directory(const char *directory) {
+    struct stat st;
+    if (stat(directory, &st) < 0) {
+       fprintf(stderr, "Error checking directory with stat!\n"); 
+       exit(1);
+    }
+
+    if (S_ISDIR(st.st_mode)) {
+        return true;
+    } else {
+        return false;
+    }
+
+}
+
+bool check_file_mp3(const char *file) {
+    size_t len = strlen(file);
+
+    char *str = strrchr(file, '/');
+    if (str != NULL) {
+        if (!strcasecmp((str+1)+(len-3), "mp3")) {
+            return true;
+        }
+    } else {
+        if (!strcasecmp(file+(len-3), "mp3")) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool check_file_wav(const char *file) {
+    size_t len = strlen(file);
+    if (!strcasecmp(file+(len-3), "wav")) {
+        return true;
+    }
+
+    return false;
+}
+
+mp3_t new_mp3(const char *file_path) {
+    mp3_t result = {
+        .sample_rate = 0,
+        .channels = 0,
+        .frames = 0,
+    };
+
+    strcpy(result.dir, file_path);
+    char *id = strrchr(result.dir, '/')+1;
+    if (id == NULL) {
+        check_file_mp3(result.dir);
+    }
+    strncpy(result.filename, id, strlen(id)-4);
+
+    return result;
+}
+
+void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
+    ma_result err = {0};
+    // CHECK CHECK CHECK
+    ma_decoder_uninit(&ma_vars->decoder);
+    pause_pb(&ma_vars->pb_state);
+
+//  char *str = NULL;
+//  str = strcat(mp3.dir, mp3.filename);
+
+    printf("dir: %s\n", mp3.dir);
+    err = ma_decoder_init_file(mp3.dir, &ma_vars->decoder_config, &ma_vars->decoder); 
+
+    if (err != MA_SUCCESS) {
+        fprintf(stderr, "Failed to open '%s' mp3 file. MA_ERROR: %d\n", mp3.filename, err);
+        exit(1);
+    }
+
+    ma_vars->device_config.playback.format   = ma_vars->decoder.outputFormat;
+    ma_vars->device_config.playback.channels = ma_vars->decoder.outputChannels;
+    ma_vars->device_config.sampleRate        = ma_vars->decoder.outputSampleRate;
+    ma_decoder_get_length_in_pcm_frames(&ma_vars->decoder, &ma_vars->pb_info.current_mp3.frames);
+
+    switch (ma_vars->decoder.outputFormat) {
+    case ma_format_u8:
+        ma_vars->pb_info.current_mp3.format = "uint8";
+       break; 
+    case ma_format_s16:
+        ma_vars->pb_info.current_mp3.format = "int16";
+       break; 
+    case ma_format_s24:
+        ma_vars->pb_info.current_mp3.format = "int24";
+       break; 
+    case ma_format_s32:
+        ma_vars->pb_info.current_mp3.format = "int32";
+       break; 
+    case ma_format_f32:
+        ma_vars->pb_info.current_mp3.format = "float32";
+        break; 
+    default:
+       break; 
+    }
+
+    strcpy(ma_vars->pb_info.current_mp3.filename, mp3.filename);
+    ma_vars->pb_info.current_mp3.sample_rate = ma_vars->decoder.outputSampleRate;
+    ma_vars->pb_info.current_mp3.channels = ma_vars->decoder.outputChannels;
+    ma_vars->pb_info.last_cursor = 0;
+
+    ma_vars->pb_state &= ~PB_PAUSED;
+    ma_vars->pb_state |= PB_PLAYING;
+
+    char time[10] = {0};
+
+    time_24hrs(time, ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate);
+    strcpy(total_time_box->text, time+3);
+    total_time_box->new_text = true;
+}
+
+
+
+playlist_t create_playlist(const char *dir_name) {
+    playlist_t result = {
+        .name = "playlist",
+        .dir = dir_name,
+        .mp3_list = NULL,
+        .mp3_list_size = 0,
+        // CHECK CHECK
+        .current_mp3 = 0,
+    };
+ 
+    DIR *dir = opendir(dir_name);
+    if (dir == NULL) {
+        fprintf(stderr, "Could not open directory: %s\n", dir_name);
+    }
+
+    de de = {0};
+    
+    de = readdir(dir);
+    while (de != NULL) {
+        if (de->d_type == DT_REG) {
+            if (check_file_mp3(de->d_name)) {
+                result.mp3_list = realloc(result.mp3_list, sizeof(mp3_t) * (result.mp3_list_size+1));
+//                strcpy(result.mp3_list[result.mp3_list_size].filename, de->d_name); 
+                char str[128] = {0};
+                strcpy(str, dir_name);
+                strcat(str, de->d_name);
+                result.mp3_list[result.mp3_list_size] = new_mp3(str);
+//                strcpy(result.mp3_list[result.mp3_list_size].dir, str);
+                
+                printf("result %zu: %s\n", result.mp3_list_size, result.mp3_list[result.mp3_list_size].filename);
+                result.mp3_list_size++;
+            }
+        }
+        de = readdir(dir);
+    }
+    closedir(dir);
+
+    return result;
+}
+
+void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
+    sidebar_box_arr = realloc(sidebar_box_arr, sizeof(box_t*) * (sidebar_box_arr_size+1));
+    char file[128] = {0};
+    strncpy(file, ma_vars->playlist.mp3_list[sidebar_box_arr_size].filename, strlen(ma_vars->playlist.mp3_list[sidebar_box_arr_size].filename)-4);
+
+    sidebar_box_arr[sidebar_box_arr_size] = create_box(renderer, 
+                                  (SDL_FRect) {
+                                    .x = 0,
+                                    .y = 0,
+                                    .w = 0,
+                                    .h = 0,
+                                  },
+                                    WHITE, 
+                                    NULL, 
+                                    file,//test_pl.mp3_list[i].filename, 
+                                    WHITE, 
+                                    NULL, 
+                                    BOX_BORDER);
+    sidebar_box_arr_size++;
+}
+
+void add_mp3_to_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const char *filename) {
+    // should pass a mp3_t instead of string
+    ma_vars->playlist.mp3_list = realloc(ma_vars->playlist.mp3_list, sizeof(mp3_t) * (ma_vars->playlist.mp3_list_size+1));
+    mp3_t mp3 = {
+        .frames = 0,
+        .sample_rate = 0,
+        .channels = 0
+    };
+
+    strcpy(mp3.dir, filename);
+    char *str = strrchr(filename, '/')+1;
+    strncpy(mp3.filename, str, strlen(str)-4);
+
+    ma_vars->playlist.mp3_list[ma_vars->playlist.mp3_list_size] = mp3; 
+    ma_vars->playlist.mp3_list_size++;
+    new_sidebar_item(renderer, ma_vars);
+
 }
 
 void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
@@ -132,10 +377,10 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               WHITE,
                               NULL,
                               BOX_VISIBLE
-                  ); 
+                     ); 
 
     play_button = create_box(renderer, 
-                              (SDL_FRect) {
+                             (SDL_FRect) {
                                 .w = 32,
                                 .h = 32,
                                 .x = ((f32)WIN_WIDTH/2) - 16,
@@ -162,7 +407,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               WHITE,
                               NULL,
                               BOX_VISIBLE
-                              ); 
+             ); 
 
     prev_song_button = create_box(renderer, 
                               (SDL_FRect) {
@@ -177,7 +422,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               WHITE,
                               NULL,
                               BOX_VISIBLE
-                              ); 
+                       ); 
     next_song_button = create_box(renderer, 
                               (SDL_FRect) {
                                 .x = play_button->rect.x+play_button->rect.w*2,
@@ -191,7 +436,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               WHITE,
                               NULL,
                               BOX_VISIBLE
-                              ); 
+                       ); 
 
     pb_state_button = create_box(renderer, 
                               (SDL_FRect) {
@@ -206,60 +451,13 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               WHITE,
                               NULL,
                               BOX_VISIBLE
-                              ); 
+                      ); 
 
     for (size_t i = 0; i < ma_vars->playlist.mp3_list_size; i++) {
         new_sidebar_item(renderer, ma_vars);
     }
     ma_vars->pb_state |= PB_ONCE;
     play_mp3(ma_vars->playlist.mp3_list[ma_vars->playlist.current_mp3], ma_vars);
-}
-
-void pause_pb(pb_state *state) {
-    *state &= ~PB_PLAYING;
-    *state |= PB_PAUSED;
-}
-
-void unpause_pb(pb_state *state) {
-    *state &= ~PB_PAUSED;
-    *state |= PB_PLAYING;
-}
-
-void repos_buttons() {
-    progress_bar->rect.x     = (sidebar_box->rect.x + sidebar_box->rect.w) + ((WIN_WIDTH - (sidebar_box->rect.x +sidebar_box->rect.w)) - progress_bar->rect.w)/2;
-    time_left_box->rect.x    = (progress_bar->rect.x - time_left_box->rect.w) - 32;
-    total_time_box->rect.x   = (progress_bar->rect.x + progress_bar->rect.w) + 32;
-    play_button->rect.x      = (progress_bar->rect.x) + (progress_bar->rect.w - play_button->rect.w)/2;
-    prev_song_button->rect.x = play_button->rect.x - play_button->rect.w * 2;
-    next_song_button->rect.x = play_button->rect.x + play_button->rect.w * 2;
-    pb_state_button->rect.x  = play_button->rect.x;
-
-}
-
-void open_sidebar(SDL_Renderer *renderer) {
-    for (size_t i = 0; i < sidebar_box_arr_size; i++) {
-        sidebar_box_arr[i]->rect = (SDL_FRect) {
-                                        .w = sidebar_box->rect.w,
-                                        .h = sidebar_rect.h,
-                                        .x = 0,
-                                        .y = (sidebar_rect.y + sidebar_rect.h + sidebar_rect.y) + (i * sidebar_rect.h)
-                                    }; 
-        sidebar_box_arr[i]->state |= BOX_VISIBLE;
-    }
-
-}
-
-void close_sidebar(SDL_Renderer *renderer) {
-    for (size_t i = 0; i < sidebar_box_arr_size; i++) {
-        sidebar_box_arr[i]->rect = (SDL_FRect) {
-                                        .w = 0,
-                                        .h = 0,
-                                        .x = 0,
-                                        .y = 0 
-                                    }; 
-        sidebar_box_arr[i]->state &= ~BOX_VISIBLE;
-    }
-
 }
 
 void update_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
@@ -292,142 +490,6 @@ void update_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
 
 void render_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
     SDL_RenderTexture(renderer, button_textures[BUTTON_SIDEBAR], NULL, &sidebar_rect);
-
-}
-
-void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
-    ma_result err = {0};
-    // CHECK CHECK CHECK
-    ma_decoder_uninit(&ma_vars->decoder);
-    pause_pb(&ma_vars->pb_state);
-
-//  char *str = NULL;
-//  str = strcat(mp3.dir, mp3.filename);
-
-    printf("dir: %s\n", mp3.dir);
-    err = ma_decoder_init_file(mp3.dir, &ma_vars->decoder_config, &ma_vars->decoder); 
-
-    if (err != MA_SUCCESS) {
-        fprintf(stderr, "Failed to open '%s' mp3 file. MA_ERROR: %d\n", mp3.filename, err);
-        exit(1);
-    }
-
-    ma_vars->device_config.playback.format   = ma_vars->decoder.outputFormat;
-    ma_vars->device_config.playback.channels = ma_vars->decoder.outputChannels;
-    ma_vars->device_config.sampleRate        = ma_vars->decoder.outputSampleRate;
-    ma_decoder_get_length_in_pcm_frames(&ma_vars->decoder, &ma_vars->pb_info.current_mp3.frames);
-
-    switch (ma_vars->decoder.outputFormat) {
-    case ma_format_u8:
-        ma_vars->pb_info.current_mp3.format = "uint8";
-       break; 
-    case ma_format_s16:
-        ma_vars->pb_info.current_mp3.format = "int16";
-       break; 
-    case ma_format_s24:
-        ma_vars->pb_info.current_mp3.format = "int24";
-       break; 
-    case ma_format_s32:
-        ma_vars->pb_info.current_mp3.format = "int32";
-       break; 
-    case ma_format_f32:
-        ma_vars->pb_info.current_mp3.format = "float32";
-        break; 
-    default:
-       break; 
-    }
-
-    strcpy(ma_vars->pb_info.current_mp3.filename, mp3.filename);
-    ma_vars->pb_info.current_mp3.sample_rate = ma_vars->decoder.outputSampleRate;
-    ma_vars->pb_info.current_mp3.channels = ma_vars->decoder.outputChannels;
-    ma_vars->pb_info.last_cursor = 0;
-
-    ma_vars->pb_state &= ~PB_PAUSED;
-    ma_vars->pb_state |= PB_PLAYING;
-
-    char time[10] = {0};
-
-    time_24hrs(time, ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate);
-    strcpy(total_time_box->text, time+3);
-    total_time_box->new_text = true;
-}
-
-
-
-playlist_t create_playlist(const char *dir_name) {
-    playlist_t result = {
-        .name = "playlist",
-        .dir = dir_name,
-        .mp3_list = NULL,
-        .mp3_list_size = 0,
-        .current_mp3 = 0,
-    };
- 
-    DIR *dir = opendir(dir_name);
-    if (dir == NULL) {
-        fprintf(stderr, "Could not open directory\n");
-    }
-
-    de de = {0};
-    
-    de = readdir(dir);
-    while (de != NULL) {
-        if (de->d_type == DT_REG) {
-            if (check_file_mp3(de->d_name)) {
-                result.mp3_list = realloc(result.mp3_list, sizeof(mp3_t) * (result.mp3_list_size+1));
-                strcpy(result.mp3_list[result.mp3_list_size].filename, de->d_name); 
-                char str[128] = {0};
-                strcpy(str, dir_name);
-                strcat(str, de->d_name);
-                strcpy(result.mp3_list[result.mp3_list_size].dir, str);
-                
-                printf("result %zu: %s\n", result.mp3_list_size, result.mp3_list[result.mp3_list_size].filename);
-                result.mp3_list_size++;
-            }
-        }
-        de = readdir(dir);
-    }
-    closedir(dir);
-
-    return result;
-}
-
-void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
-    sidebar_box_arr = realloc(sidebar_box_arr, sizeof(box_t*) * (sidebar_box_arr_size+1));
-    char file[128] = {0};
-    strncpy(file, ma_vars->playlist.mp3_list[sidebar_box_arr_size].filename, strlen(ma_vars->playlist.mp3_list[sidebar_box_arr_size].filename)-4);
-
-    sidebar_box_arr[sidebar_box_arr_size] = create_box(renderer, 
-                                  (SDL_FRect) {
-                                    .x = 0,
-                                    .y = 0,
-                                    .w = 0,
-                                    .h = 0,
-                                  },
-                                    WHITE, 
-                                    NULL, 
-                                    file,//test_pl.mp3_list[i].filename, 
-                                    WHITE, 
-                                    NULL, 
-                                    BOX_BORDER);
-    sidebar_box_arr_size++;
-}
-
-void add_mp3_to_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const char *filename) {
-    ma_vars->playlist.mp3_list = realloc(ma_vars->playlist.mp3_list, sizeof(mp3_t) * (ma_vars->playlist.mp3_list_size+1));
-    mp3_t mp3 = {
-        .frames = 0,
-        .sample_rate = 0,
-        .channels = 0
-    };
-
-    strcpy(mp3.dir, filename);
-    char *str = strrchr(filename, '/')+1;
-    strncpy(mp3.filename, str, strlen(str)-4);
-
-    ma_vars->playlist.mp3_list[ma_vars->playlist.mp3_list_size] = mp3; 
-    ma_vars->playlist.mp3_list_size++;
-    new_sidebar_item(renderer, ma_vars);
 
 }
 
@@ -475,11 +537,13 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
     if (event.type == SDL_EVENT_DROP_FILE) {
         const char *file = event.drop.data;
         printf("Dropped: %s\n", file);
-        add_mp3_to_playlist(renderer, ma_vars, file);
+        if (check_file_mp3(file)) {
+            add_mp3_to_playlist(renderer, ma_vars, file);
+            play_mp3(new_mp3(file), ma_vars);
+        }
+
 
     }
-
-
 
     if (err == MA_AT_END) {
         if (ma_vars->pb_state & PB_LOOPING) {
@@ -620,24 +684,6 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
         SDL_SetTextureColorMod(play_button->texture, 255, 255, 255);
     }
 
-}
-
-bool check_file_mp3(const char *file) {
-    size_t len = strlen(file);
-    if (!strcasecmp(file+(len-3), "mp3")) {
-        return true;
-    }
-
-    return false;
-}
-
-bool check_file_wav(const char *file) {
-    size_t len = strlen(file);
-    if (!strcasecmp(file+(len-3), "wav")) {
-        return true;
-    }
-
-    return false;
 }
 
 void print_playlist(playlist_t playlist) {

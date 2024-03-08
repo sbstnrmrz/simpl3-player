@@ -51,43 +51,50 @@ void print_pb_file_info(const char *filename, u64 total_frames, u8 channels, u32
 }
 
 int parse_args(int argc, char *argv[]) {
-    if (argc < 2) {
+    if (argc < 1) {
         return ERROR_NOCOMMAND;
-    } else if (argc > 3) {
+    } else if (argc > 2) {
         fprintf(stderr, "Only two commands can be used\n");
         exit(1);
     }
 
-    if (*argv[1] == '-') {
-        if (*(argv[1]+1) == 'p') {
-            char *file = strchr(argv[2], '.');
-            if (file == NULL) {
-                return PLAYBACK_MP3;
-            }
-            while(file != NULL) {
+    size_t len = strlen(argv[1]);
+    if (check_directory(argv[1]) && *argv[len-1] != '/') {
+        argv[2] = strcat(argv[1], "/"); 
+    }
+
+
+
+//  if (*argv[1] == '-') {
+//      if (*(argv[1]+1) == 'p') {
+//          char *file = strchr(argv[2], '.');
+//          if (file == NULL) {
+//              return PLAYBACK_MP3;
+//          }
+//          while(file != NULL) {
 //              if (strcasecmp(file+1, "wav") || strcasecmp(file+1, "mp3") || strcasecmp(file+1, "flac")) {
 //                  break;
 //              }
-                if (strcasecmp(file+1, "wav")) {
-                    return PLAYBACK_WAV;
-                }
-                if (strcasecmp(file+1, "mp3")) {
-                    return PLAYBACK_MP3;
-                }
-                if (strcasecmp(file+1, "flac")) {
-                    return PLAYBACK_FLAC;
-                }
-                file = strchr(argv[2]+1, '.');
-            } 
-            return ERROR_FILETYPE; 
-        }
-        if (*(argv[1]+1) == 'h') {
-            return PRINT_HELP;
-        }
+//              if (strcasecmp(file+1, "wav")) {
+//                  return PLAYBACK_WAV;
+//              }
+//              if (strcasecmp(file+1, "mp3")) {
+//                  return PLAYBACK_MP3;
+//              }
+//              if (strcasecmp(file+1, "flac")) {
+//                  return PLAYBACK_FLAC;
+//              }
+//              file = strchr(argv[2]+1, '.');
+//          } 
+//          return ERROR_FILETYPE; 
+//      }
+//      if (*(argv[1]+1) == 'h') {
+//          return PRINT_HELP;
+//      }
 
-    }
+//  }
  
-    return ERROR_NOCOMMAND;
+    return PLAYBACK_MP3;
 }
 
 void print_parse_info(parse_result result) {
@@ -224,7 +231,14 @@ int main(int argc, char *argv[]) {
         ma_vars.device_config = ma_device_config_init(ma_device_type_playback);
         ma_vars.device_config.dataCallback      = pb_callback;
         ma_vars.device_config.pUserData         = &ma_vars;
+
+        if (check_directory(argv[2])) {
+            printf("es un directorio\n");
+        }
         
+        if (check_file_mp3(argv[2])) {
+            printf("es un mp3\n");
+        }
         ma_vars.playlist = create_playlist(argv[2]);
     }
 
