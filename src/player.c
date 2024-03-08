@@ -25,6 +25,13 @@ SDL_FRect sidebar_rect = {0};
 SDL_Texture *button_textures[9] = {0};
 bool sidebar_open = false;
 
+struct {
+    SDL_FRect icon;
+    SDL_Texture *texture;
+    box_t box;
+    bool open;
+} sidebar;
+
 f32 progress_bar_h = 20;
 f32 progress_bar_w = 300;
 
