@@ -65,6 +65,7 @@ typedef enum {
     BUTTON_LOOP = 6,
     BUTTON_SHUFFLE = 7,
     BUTTON_SIDEBAR = 8,
+    BUTTON_VOLUME = 9,
 } button_id;
 
 box_t *create_box(SDL_Renderer *renderer, 

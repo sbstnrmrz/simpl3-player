@@ -264,6 +264,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Failed to initialize device\n");
         exit(1);
     }
+    ma_device_set_master_volume(&ma_vars.device, 1);
     printf("Device initialized\n");
 
     if (ma_device_start(&ma_vars.device) != MA_SUCCESS) {

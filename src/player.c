@@ -19,10 +19,11 @@ box_t *play_button = NULL;
 box_t *pb_state_button = NULL;
 box_t *slider = NULL;
 box_t *sidebar_box = NULL;
+box_t *volume_button = NULL;
 box_t **sidebar_box_arr = NULL;
 size_t sidebar_box_arr_size = 0;
 SDL_FRect sidebar_rect = {0};
-SDL_Texture *button_textures[9] = {0};
+SDL_Texture *button_textures[10] = {0};
 bool sidebar_open = false;
 
 struct {
@@ -89,7 +90,8 @@ void repos_buttons() {
     play_button->rect.x      = (progress_bar->rect.x) + (progress_bar->rect.w - play_button->rect.w)/2;
     prev_song_button->rect.x = play_button->rect.x - play_button->rect.w * 2;
     next_song_button->rect.x = play_button->rect.x + play_button->rect.w * 2;
-    pb_state_button->rect.x  = play_button->rect.x;
+    volume_button->rect.x = (prev_song_button->rect.x - volume_button->rect.w*2);
+    pb_state_button->rect.x  = (prev_song_button->rect.x - volume_button->rect.w*2);
 
 }
 
@@ -331,6 +333,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
     button_textures[BUTTON_LOOP] = IMG_LoadTexture(renderer, "assets/buttons/loop.png");
     button_textures[BUTTON_SHUFFLE] = IMG_LoadTexture(renderer, "assets/buttons/shuffle.png");
     button_textures[BUTTON_SIDEBAR] = IMG_LoadTexture(renderer, "assets/buttons/sidebar.png");
+    button_textures[BUTTON_VOLUME] = IMG_LoadTexture(renderer, "assets/buttons/volume.png");
 
     sidebar_rect = (SDL_FRect) {
                         .w = 32, 
@@ -414,6 +417,21 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               BOX_VISIBLE
                   ); 
 
+    volume_button = create_box(renderer, 
+                              (SDL_FRect) {
+                                  .w = 32,
+                                  .h = 32,
+                                  .x = 0,
+                                  .y = 0,
+                              },
+                              WHITE,
+                              button_textures[BUTTON_VOLUME],
+                              NULL,
+                              WHITE,
+                              NULL,
+                              BOX_VISIBLE
+             ); 
+
     slider = create_box(renderer, 
                               (SDL_FRect) {
                                   .w = 32,
@@ -460,8 +478,8 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
 
     pb_state_button = create_box(renderer, 
                               (SDL_FRect) {
-                                .x = ((f32)WIN_WIDTH/2) - 16,
-                                .y = (f32)WIN_HEIGHT/2 + 96,
+                                .x = (prev_song_button->rect.x - 32) - 32,
+                                .y = play_button->rect.y,
                                 .w = 32,
                                 .h = 32,
                               },
@@ -481,7 +499,6 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
 }
 
 void update_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
-
     if (check_mouse_rect_collision(mouse, sidebar_rect)) {
         SDL_SetTextureColorMod(button_textures[BUTTON_SIDEBAR], 150, 150, 150);
         if (mouse_clicked(mouse)) {
