@@ -19,7 +19,6 @@ box_t *play_button = NULL;
 box_t *pb_state_button = NULL;
 box_t *slider = NULL;
 box_t *sidebar_box = NULL;
-box_t *volume_button = NULL;
 box_t **sidebar_box_arr = NULL;
 size_t sidebar_box_arr_size = 0;
 SDL_FRect sidebar_rect = {0};
@@ -32,6 +31,13 @@ struct {
     box_t box;
     bool open;
 } sidebar;
+
+struct {
+    box_t *icon;
+    box_t *bar;
+    box_t *slider;
+    bool open;
+} volume_bar;
 
 f32 progress_bar_h = 20;
 f32 progress_bar_w = 300;
@@ -90,37 +96,23 @@ void repos_buttons() {
     play_button->rect.x      = (progress_bar->rect.x) + (progress_bar->rect.w - play_button->rect.w)/2;
     prev_song_button->rect.x = play_button->rect.x - play_button->rect.w * 2;
     next_song_button->rect.x = play_button->rect.x + play_button->rect.w * 2;
-    volume_button->rect.x = (prev_song_button->rect.x - volume_button->rect.w*2);
-    pb_state_button->rect.x  = (prev_song_button->rect.x - volume_button->rect.w*2);
+    volume_bar.icon->rect.x    = (play_button->rect.x);
+    pb_state_button->rect.x  = (prev_song_button->rect.x - volume_bar.icon->rect.w*2);
 
 }
 
-void open_sidebar(SDL_Renderer *renderer) {
+void open_sidebar() {
     for (size_t i = 0; i < sidebar_box_arr_size; i++) {
-//      sidebar_box_arr[i]->rect = (SDL_FRect) {
-//                                      .w = sidebar_box->rect.w,
-//                                      .h = sidebar_rect.h,
-//                                      .x = 0,
-//                                      .y = (sidebar_rect.y + sidebar_rect.h + sidebar_rect.y) + (i * sidebar_rect.h)
-//                                  }; 
         sidebar_box_arr[i]->state |= BOX_VISIBLE;
     }
-
     sidebar_open = true;
 }
 
-void close_sidebar(SDL_Renderer *renderer) {
+void close_sidebar() {
     for (size_t i = 0; i < sidebar_box_arr_size; i++) {
-//      sidebar_box_arr[i]->rect = (SDL_FRect) {
-//                                      .w = 0,
-//                                      .h = 0,
-//                                      .x = 0,
-//                                      .y = 0 
-//                                  }; 
         sidebar_box_arr[i]->state &= ~BOX_VISIBLE;
     }
     sidebar_open = false;
-
 }
 
 bool check_directory(const char *directory) {
@@ -417,20 +409,50 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               BOX_VISIBLE
                   ); 
 
-    volume_button = create_box(renderer, 
+    volume_bar.icon = create_box(renderer, 
+                                  (SDL_FRect) {
+                                      .w = 32,
+                                      .h = 32,
+                                      .x = play_button->rect.x,
+                                      .y = (play_button->rect.y + 32) + 32,
+                                  },
+                                  WHITE,
+                                  button_textures[BUTTON_VOLUME],
+                                  NULL,
+                                  WHITE,
+                                  NULL,
+                                  BOX_VISIBLE
+                      ); 
+
+    volume_bar.bar =  create_box(renderer, 
                               (SDL_FRect) {
-                                  .w = 32,
-                                  .h = 32,
-                                  .x = 0,
-                                  .y = 0,
+                                  .w = 100,
+                                  .h = progress_bar_h/4,
+                                  .x = (volume_bar.icon->rect.x + volume_bar.icon->rect.w) + 10,
+                                  .y = (volume_bar.icon->rect.y + volume_bar.icon->rect.h/2) - progress_bar_h/4,
                               },
                               WHITE,
-                              button_textures[BUTTON_VOLUME],
+                              NULL,
+                              NULL,
+                              WHITE,
+                              NULL,
+                              BOX_VISIBLE | BOX_COLOR_FILL
+                     ); 
+
+    volume_bar.slider =  create_box(renderer, 
+                              (SDL_FRect) {
+                                  .w = 16,
+                                  .h = 16,
+                                  .x = (volume_bar.bar->rect.x) - 8,
+                                  .y = (volume_bar.bar->rect.y) - 4,
+                              },
+                              WHITE,
+                              button_textures[BUTTON_SLIDER],
                               NULL,
                               WHITE,
                               NULL,
                               BOX_VISIBLE
-             ); 
+                     ); 
 
     slider = create_box(renderer, 
                               (SDL_FRect) {
@@ -505,12 +527,12 @@ void update_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
             if (sidebar_box->state & BOX_VISIBLE) {
                 sidebar_box->state &= ~BOX_VISIBLE;
                 sidebar_box->rect.w = 0;
-                close_sidebar(renderer);
+                close_sidebar();
                 repos_buttons();
             } else {
                 sidebar_box->state |= BOX_VISIBLE;
                 sidebar_box->rect.w = 200;
-                open_sidebar(renderer);
+                open_sidebar();
                 repos_buttons();
             }
         }
