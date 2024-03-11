@@ -1,4 +1,5 @@
 #include "player.h"
+#include "SDL3/SDL_image.h"
 #include "clock.h"
 #include "defs.h"
 #include "ui.h"
@@ -36,6 +37,8 @@ struct {
     box_t *icon;
     box_t *bar;
     box_t *slider;
+    box_t vol_text;
+    i8 volume;
     bool open;
 } volume_bar;
 
@@ -223,8 +226,6 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     strcpy(total_time_box->text, time+3);
     total_time_box->new_text = true;
 }
-
-
 
 playlist_t create_playlist(const char *dir_name) {
     playlist_t result = {
@@ -428,7 +429,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               (SDL_FRect) {
                                   .w = 100,
                                   .h = progress_bar_h/4,
-                                  .x = (volume_bar.icon->rect.x + volume_bar.icon->rect.w) + 10,
+                                  .x = (volume_bar.icon->rect.x + volume_bar.icon->rect.w) + 20,
                                   .y = (volume_bar.icon->rect.y + volume_bar.icon->rect.h/2) - progress_bar_h/4,
                               },
                               WHITE,
@@ -436,7 +437,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               NULL,
                               WHITE,
                               NULL,
-                              BOX_VISIBLE | BOX_COLOR_FILL
+                              BOX_COLOR_FILL
                      ); 
 
     volume_bar.slider =  create_box(renderer, 
@@ -444,14 +445,14 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                                   .w = 16,
                                   .h = 16,
                                   .x = (volume_bar.bar->rect.x) - 8,
-                                  .y = (volume_bar.bar->rect.y) - 4,
+                                  .y = (volume_bar.bar->rect.y) - volume_bar.bar->rect.h,
                               },
                               WHITE,
-                              button_textures[BUTTON_SLIDER],
+                              IMG_LoadTexture(renderer, "assets/buttons/slider.png"),
                               NULL,
                               WHITE,
                               NULL,
-                              BOX_VISIBLE
+                              BOX_NONE 
                      ); 
 
     slider = create_box(renderer, 
@@ -462,7 +463,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                                   .y = 0,
                               },
                               WHITE,
-                              button_textures[BUTTON_SLIDER],
+                              IMG_LoadTexture(renderer, "assets/buttons/slider.png"),
                               NULL,
                               WHITE,
                               NULL,
@@ -634,6 +635,30 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
         }
     }
     SDL_SetTextureColorMod(sidebar_box_arr[ma_vars->playlist.current_mp3]->font_texture, 150, 150, 150);
+
+    if (volume_bar.icon->state & BOX_HOVERED) {
+        SDL_SetTextureColorMod(volume_bar.icon->texture, 150, 150, 150);
+        volume_bar.bar->state |= BOX_VISIBLE;
+        volume_bar.slider->state |= BOX_VISIBLE;
+    } else {
+        SDL_SetTextureColorMod(volume_bar.icon->texture, 255, 255, 255);
+//      volume_bar.bar->state &= ~BOX_VISIBLE;
+//      volume_bar.slider->state &= ~BOX_VISIBLE;
+        volume_bar.bar->state |= BOX_VISIBLE;
+        volume_bar.slider->state |= BOX_VISIBLE;
+    }
+
+    if (volume_bar.bar->state & BOX_HOVERED) {
+        if (mouse_pressed(mouse)) {
+            printf("pressed\n");
+            volume_bar.slider->rect.x = mouse.pos.x - volume_bar.slider->rect.w/2;
+        }
+    }
+    if (volume_bar.slider->state & BOX_HOVERED) {
+        SDL_SetTextureColorMod(volume_bar.slider->texture, 150, 150, 150);
+    } else {
+        SDL_SetTextureColorMod(volume_bar.slider->texture, 255, 255, 255);
+    }
 
     char time[10] = {0};
     time_24hrs(time, ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);

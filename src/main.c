@@ -148,7 +148,7 @@ void init_sdl(const char *title, int win_width, int win_height, u32 flags) {
         exit(1);
     }
 
-    engine.renderer = SDL_CreateRenderer(engine.window, NULL, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    engine.renderer = SDL_CreateRenderer(engine.window, NULL, SDL_RENDERER_PRESENTVSYNC);
     if (engine.renderer == NULL) {
         fprintf(stderr, "Failed to create SDL_Renderer. SDL_Error: %s\n", SDL_GetError());
         exit(1);
@@ -212,7 +212,7 @@ void uninit_ma() {
 }
 
 void debug() {
-//  print_mouse_info(engine.mouse);
+  print_mouse_info(engine.mouse);
 //  print_pb_info(ma_vars.pb_info);
 //  print_pb_state(ma_vars.pb_state);
 

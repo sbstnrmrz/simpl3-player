@@ -47,7 +47,7 @@ box_t *create_box(SDL_Renderer *renderer,
     }
 
     if (flags == BOX_NONE) {
-        box_arr[box_arr_size]->state |= BOX_VISIBLE;
+        box_arr[box_arr_size]->state |= BOX_NONE;
     } else {
         box_arr[box_arr_size]->state |= flags;
     }
@@ -138,20 +138,20 @@ bool check_mouse_rect_collision(mouse_t mouse, SDL_FRect rect) {
 void mouse_update(SDL_Event event, mouse_t *mouse) {
     if (mouse->state & M_RELEASED) {
         mouse->button = 0;
+        mouse->state = 0;
     }
 
-    mouse->state = 0;
     if (event.type == SDL_EVENT_MOUSE_MOTION) {
         SDL_GetMouseState(&mouse->pos.x, &mouse->pos.y);
         mouse->state |= M_MOVED;
+    } else {
+        mouse->state &= ~M_MOVED;
     }
     if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         if (event.button.button == SDL_BUTTON_LEFT) {
             mouse->button |= MB_LEFT_CLICK;
         }
-        mouse->state = M_PRESSED;
-//      mouse->last_pos.x = mouse->pos.x;
-//      mouse->last_pos.y = mouse->pos.y;
+        mouse->state |= M_PRESSED;
 
     } else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
         mouse->state = M_RELEASED;
@@ -161,6 +161,14 @@ void mouse_update(SDL_Event event, mouse_t *mouse) {
 // check if mouse was clicked
 bool mouse_clicked(mouse_t mouse) {
     if (mouse.state & M_RELEASED && mouse.button & MB_LEFT_CLICK) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool mouse_pressed(mouse_t mouse) {
+    if (mouse.state & M_PRESSED && mouse.button & MB_LEFT_CLICK) {
         return true;
     } else {
         return false;
@@ -298,6 +306,19 @@ SDL_Texture *load_svg(SDL_Renderer *renderer, const char *svg_file) {
     printf("Texture from SVG: %s. Created succesfully\n", svg_file);
 
     return texture;
+}
+
+void print_mouse_info(mouse_t mouse) {
+    printf("[MOUSE INFO]\n");
+    printf("%p\n", &mouse);
+    printf("Pos X : Y\n%.2f, %.2f\n", mouse.pos.x, mouse.pos.y);
+    printf("State: MOVED: %d | PRESSED: %d | RELEASED: %d\n", mouse.state&M_MOVED, 
+                                                              mouse.state&M_PRESSED,
+                                                              mouse.state&M_RELEASED);
+    printf("Button:\nMB_LEFT: %d\nMB_RIGHT: %d\nMB_MIDDLE: %d\n", mouse.button&MB_LEFT_CLICK,
+                                                                  mouse.button&MB_RIGHT_CLICK,
+                                                                  mouse.button&MB_MIDDLE_CLICK);
+    printf("\n");
 }
 
 void print_box_info() {

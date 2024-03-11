@@ -10,13 +10,13 @@ typedef enum {
     MB_NONE         = 0,
     MB_LEFT_CLICK   = 1,
     MB_RIGHT_CLICK  = 2,
-    MB_MIDDLE_CLICK = 3,
+    MB_MIDDLE_CLICK = 4,
 } mouse_button;
 
 typedef enum {
     M_PRESSED = 1,
     M_RELEASED = 2,
-    M_MOVED,
+    M_MOVED = 4,
 } mouse_state;
 
 typedef struct {
@@ -83,6 +83,7 @@ SDL_Texture *create_font_texture(SDL_Renderer *renderer, TTF_Font* font, const c
 bool check_mouse_rect_collision(mouse_t mouse, SDL_FRect rect);
 void mouse_update(SDL_Event event, mouse_t *mouse);
 bool mouse_clicked(mouse_t mouse);
+bool mouse_pressed(mouse_t mouse);
 SDL_Texture *load_svg(SDL_Renderer *renderer, const char* svg_file);
 
 SDL_Texture *__new_font_texture(SDL_Renderer *renderer, box_t *box, TTF_Font *font, const char *new_text, SDL_Color text_color);
@@ -92,5 +93,6 @@ void update_animations(SDL_Renderer *renderer);
 void anim_expand_box(box_t *box);
 
 void print_box_info();
+void print_mouse_info(mouse_t mouse);
 
 #endif // UI_H
