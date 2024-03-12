@@ -95,15 +95,17 @@ void unpause_pb(pb_state *state) {
 }
 
 void repos_buttons() {
-    progress_bar->rect.x     = (sidebar_box->rect.x + sidebar_box->rect.w) + ((WIN_WIDTH - (sidebar_box->rect.x +sidebar_box->rect.w)) - progress_bar->rect.w)/2;
-    time_left_box->rect.x    = (progress_bar->rect.x - time_left_box->rect.w) - 32;
-    total_time_box->rect.x   = (progress_bar->rect.x + progress_bar->rect.w) + 32;
-    play_button->rect.x      = (progress_bar->rect.x) + (progress_bar->rect.w - play_button->rect.w)/2;
-    prev_song_button->rect.x = play_button->rect.x - play_button->rect.w * 2;
-    next_song_button->rect.x = play_button->rect.x + play_button->rect.w * 2;
-    volume_bar.icon->rect.x    = (play_button->rect.x);
-    pb_state_button->rect.x  = (prev_song_button->rect.x - volume_bar.icon->rect.w*2);
+    progress_bar->rect.x      = (sidebar_box->rect.x + sidebar_box->rect.w) + ((WIN_WIDTH - (sidebar_box->rect.x +sidebar_box->rect.w)) - progress_bar->rect.w)/2;
+    time_left_box->rect.x     = (progress_bar->rect.x - time_left_box->rect.w) - 32;
+    total_time_box->rect.x    = (progress_bar->rect.x + progress_bar->rect.w) + 32;
+    play_button->rect.x       = (progress_bar->rect.x) + (progress_bar->rect.w - play_button->rect.w)/2;
+    prev_song_button->rect.x  = play_button->rect.x - play_button->rect.w * 2;
+    next_song_button->rect.x  = play_button->rect.x + play_button->rect.w * 2;
+    volume_bar.icon->rect.x   = (play_button->rect.x);
+    pb_state_button->rect.x   = (prev_song_button->rect.x - volume_bar.icon->rect.w*2);
     current_song_name->rect.x = progress_bar->rect.x;
+    volume_bar.bar->rect.x    = (volume_bar.icon->rect.x + volume_bar.icon->rect.w) + 20;
+    volume_bar.slider->rect.x = (volume_bar.bar->rect.x) - 8;
 
 }
 
@@ -299,8 +301,6 @@ void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
     if (sidebar_open) {
          sidebar_box_arr[sidebar_box_arr_size]->state |= BOX_VISIBLE;   
     }
-    printf("rect w: %.2f\n", sidebar_box->rect.w);
-    printf("rect h: %.2f\n", sidebar_box->rect.y);
     sidebar_box_arr_size++;
 }
 
@@ -529,7 +529,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                                    },
                                    WHITE,
                                    NULL,
-                                   "PLACEHOLDER",
+                                   " ",
                                    WHITE,
                                    NULL,
                                    BOX_VISIBLE);
@@ -667,10 +667,23 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
         volume_bar.bar->state |= BOX_VISIBLE;
         volume_bar.slider->state |= BOX_VISIBLE;
     }
+    f32 vol = 0; 
+    ma_device_get_master_volume(&ma_vars->device, &vol); 
+    volume_bar.slider->rect.x = volume_bar.bar->rect.x + (vol*100) - volume_bar.slider->rect.w/2; 
 
     if (volume_bar.bar->state & BOX_VISIBLE && check_mouse_rect_collision(mouse, volume_bar.rect)) {
         if (mouse_pressed(mouse)) {
             volume_bar.slider->rect.x = mouse.pos.x - volume_bar.slider->rect.w/2;
+            i32 t = (volume_bar.slider->rect.x + volume_bar.slider->rect.w/2) - volume_bar.bar->rect.x;
+            printf("size: %f, pos: %d\n", volume_bar.bar->rect.w/100, t);
+
+            f32 t2 = (f32)t/100;
+
+            ma_device_set_master_volume(&ma_vars->device, t2);
+            printf("VOLUME: %0.f\n", vol*100);
+
+
+
         }
     }
     if (volume_bar.slider->state & BOX_HOVERED) {
