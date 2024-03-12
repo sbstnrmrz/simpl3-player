@@ -675,15 +675,7 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
         if (mouse_pressed(mouse)) {
             volume_bar.slider->rect.x = mouse.pos.x - volume_bar.slider->rect.w/2;
             i32 t = (volume_bar.slider->rect.x + volume_bar.slider->rect.w/2) - volume_bar.bar->rect.x;
-            printf("size: %f, pos: %d\n", volume_bar.bar->rect.w/100, t);
-
-            f32 t2 = (f32)t/100;
-
-            ma_device_set_master_volume(&ma_vars->device, t2);
-            printf("VOLUME: %0.f\n", vol*100);
-
-
-
+            ma_device_set_master_volume(&ma_vars->device, (f32)t/100);
         }
     }
     if (volume_bar.slider->state & BOX_HOVERED) {
@@ -723,6 +715,9 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
             size_t t = 0;
             if (ma_vars->pb_state & PB_SHUFFLE) {
                 t = rand()%ma_vars->playlist.mp3_list_size; 
+                while (t == ma_vars->playlist.current_mp3) {
+                    t = rand()%ma_vars->playlist.mp3_list_size; 
+                }
             } else if (ma_vars->playlist.current_mp3 < ma_vars->playlist.mp3_list_size-1) {
                 t = ma_vars->playlist.current_mp3 + 1;
             } else {
