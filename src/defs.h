@@ -71,6 +71,7 @@ typedef enum {
     PB_ONCE = 4,
     PB_LOOPING = 8,
     PB_SHUFFLE = 16,
+    PB_MUTED = 32,
     PB_ENDED,
 } pb_state;
 

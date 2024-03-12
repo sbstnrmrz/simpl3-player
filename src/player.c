@@ -616,8 +616,6 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
             add_mp3_to_playlist(renderer, ma_vars, file);
             play_mp3(new_mp3(file), ma_vars);
         }
-
-
     }
 
     if (err == MA_AT_END) {
@@ -656,10 +654,31 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
     }
     SDL_SetTextureColorMod(sidebar_box_arr[ma_vars->playlist.current_mp3]->font_texture, 150, 150, 150);
 
+    static f32 vol = 0; 
+    static f32 last_vol = 0;
+    printf("VOL: %0.f | LASTVOL: %0.f\n", vol*100, last_vol*100);
+
+    ma_device_get_master_volume(&ma_vars->device, &vol); 
+    if (vol > 0) {
+        ma_vars->pb_state &= ~PB_MUTED;
+        last_vol = vol;
+    } else {
+        ma_vars->pb_state |= PB_MUTED;
+    }
+    volume_bar.slider->rect.x = volume_bar.bar->rect.x + (vol*100) - volume_bar.slider->rect.w/2; 
     if (volume_bar.icon->state & BOX_HOVERED) {
         SDL_SetTextureColorMod(volume_bar.icon->texture, 150, 150, 150);
         volume_bar.bar->state |= BOX_VISIBLE;
         volume_bar.slider->state |= BOX_VISIBLE;
+        if (mouse_clicked(mouse)) {
+            if (ma_vars->pb_state & PB_MUTED) {
+                ma_vars->pb_state &= ~PB_MUTED;
+                ma_device_set_master_volume(&ma_vars->device, last_vol);
+            } else {
+                ma_vars->pb_state |= PB_MUTED;
+                ma_device_set_master_volume(&ma_vars->device, 0);
+            }
+        }
     } else {
         SDL_SetTextureColorMod(volume_bar.icon->texture, 255, 255, 255);
 //      volume_bar.bar->state &= ~BOX_VISIBLE;
@@ -667,9 +686,6 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
         volume_bar.bar->state |= BOX_VISIBLE;
         volume_bar.slider->state |= BOX_VISIBLE;
     }
-    f32 vol = 0; 
-    ma_device_get_master_volume(&ma_vars->device, &vol); 
-    volume_bar.slider->rect.x = volume_bar.bar->rect.x + (vol*100) - volume_bar.slider->rect.w/2; 
 
     if (volume_bar.bar->state & BOX_VISIBLE && check_mouse_rect_collision(mouse, volume_bar.rect)) {
         if (mouse_pressed(mouse)) {
@@ -825,11 +841,12 @@ void print_pb_info(pb_info pb_info) {
 
 void print_pb_state(pb_state pb_state) {
     printf("[PLAYBACK STATE]\n");
-    printf("  Playing: %d\n", pb_state&PB_PLAYING);
-    printf("  Paused: %d\n", pb_state&PB_PAUSED);
-    printf("  Once: %d\n", pb_state&PB_ONCE);
-    printf("  Loop: %d\n", pb_state&PB_LOOPING);
-    printf("  Shuffle: %d\n", pb_state&PB_SHUFFLE);
+    printf("  Playing: %u\n", pb_state&PB_PLAYING);
+    printf("  Paused: %u\n", pb_state&PB_PAUSED);
+    printf("  Muted: %u\n", pb_state&PB_MUTED);
+    printf("  Once: %u\n", pb_state&PB_ONCE);
+    printf("  Loop: %u\n", pb_state&PB_LOOPING);
+    printf("  Shuffle: %u\n", pb_state&PB_SHUFFLE);
 
     printf("\n");
 }
