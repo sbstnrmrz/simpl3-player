@@ -212,9 +212,11 @@ void uninit_ma() {
 }
 
 void debug() {
-  print_mouse_info(engine.mouse);
-//  print_pb_info(ma_vars.pb_info);
-//  print_pb_state(ma_vars.pb_state);
+//  print_mouse_info(engine.mouse);
+    print_playlist_info(ma_vars.playlist);
+    print_pb_info(ma_vars.pb_info);
+//    print_pb_state(ma_vars.pb_state);
+
 
 }
 

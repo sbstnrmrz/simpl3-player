@@ -17,6 +17,7 @@ box_t *create_box(SDL_Renderer *renderer,
     box_arr[box_arr_size] = malloc(sizeof(box_t));
 
     box_arr[box_arr_size]->rect = rect;
+//  box_arr[box_arr_size]->text_rect = rect;
     box_arr[box_arr_size]->rect_color = rect_color;
 
     if (texture != NULL) {

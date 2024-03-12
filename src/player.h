@@ -37,5 +37,6 @@ playlist_t create_playlist(const char *dir);
 void print_playlist(playlist_t playlist);
 void print_pb_info(pb_info pb_info);
 void print_pb_state(pb_state pb_state);
+void print_playlist_info(playlist_t playlist);
 
 #endif // PLAYER_H

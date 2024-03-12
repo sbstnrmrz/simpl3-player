@@ -20,6 +20,7 @@ box_t *play_button = NULL;
 box_t *pb_state_button = NULL;
 box_t *slider = NULL;
 box_t *sidebar_box = NULL;
+box_t *current_song_name = NULL;
 box_t **sidebar_box_arr = NULL;
 size_t sidebar_box_arr_size = 0;
 SDL_FRect sidebar_rect = {0};
@@ -37,7 +38,8 @@ struct {
     box_t *icon;
     box_t *bar;
     box_t *slider;
-    box_t vol_text;
+    box_t *vol_text;
+    SDL_FRect rect;
     i8 volume;
     bool open;
 } volume_bar;
@@ -101,6 +103,7 @@ void repos_buttons() {
     next_song_button->rect.x = play_button->rect.x + play_button->rect.w * 2;
     volume_bar.icon->rect.x    = (play_button->rect.x);
     pb_state_button->rect.x  = (prev_song_button->rect.x - volume_bar.icon->rect.w*2);
+    current_song_name->rect.x = progress_bar->rect.x;
 
 }
 
@@ -209,6 +212,7 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
         ma_vars->pb_info.current_mp3.format = "float32";
         break; 
     default:
+        ma_vars->pb_info.current_mp3.format = "unknown";
        break; 
     }
 
@@ -225,6 +229,9 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     time_24hrs(time, ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate);
     strcpy(total_time_box->text, time+3);
     total_time_box->new_text = true;
+
+    strcpy(current_song_name->text, mp3.filename);
+    current_song_name->new_text = true;
 }
 
 playlist_t create_playlist(const char *dir_name) {
@@ -305,12 +312,12 @@ void add_mp3_to_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const char 
         .sample_rate = 0,
         .channels = 0
     };
-
     strcpy(mp3.dir, filename);
     char *str = strrchr(filename, '/')+1;
     strncpy(mp3.filename, str, strlen(str)-4);
 
     ma_vars->playlist.mp3_list[ma_vars->playlist.mp3_list_size] = mp3; 
+    ma_vars->playlist.current_mp3 = ma_vars->playlist.mp3_list_size; 
     ma_vars->playlist.mp3_list_size++;
     new_sidebar_item(renderer, ma_vars);
 
@@ -347,8 +354,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               NULL,
                               WHITE,
                               NULL,
-                              BOX_BORDER
-                     ); 
+                              BOX_BORDER); 
 
     progress_bar = create_box(renderer, 
                               (SDL_FRect) {
@@ -362,8 +368,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               NULL,
                               WHITE,
                               NULL,
-                              BOX_VISIBLE | BOX_COLOR_FILL
-                    ); 
+                              BOX_VISIBLE | BOX_COLOR_FILL); 
 
     time_left_box = create_box(renderer, 
                               (SDL_FRect) {
@@ -377,8 +382,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               "00:00:00",
                               WHITE,
                               NULL,
-                              BOX_VISIBLE
-                  ); 
+                              BOX_VISIBLE); 
 
     total_time_box = create_box(renderer, 
                               (SDL_FRect) {
@@ -392,8 +396,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               "00:00:00",
                               WHITE,
                               NULL,
-                              BOX_VISIBLE
-                     ); 
+                              BOX_VISIBLE); 
 
     play_button = create_box(renderer, 
                              (SDL_FRect) {
@@ -407,8 +410,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               NULL,
                               WHITE,
                               NULL,
-                              BOX_VISIBLE
-                  ); 
+                              BOX_VISIBLE); 
 
     volume_bar.icon = create_box(renderer, 
                                   (SDL_FRect) {
@@ -422,23 +424,21 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                                   NULL,
                                   WHITE,
                                   NULL,
-                                  BOX_VISIBLE
-                      ); 
+                                  BOX_VISIBLE); 
 
     volume_bar.bar =  create_box(renderer, 
                               (SDL_FRect) {
                                   .w = 100,
                                   .h = progress_bar_h/4,
                                   .x = (volume_bar.icon->rect.x + volume_bar.icon->rect.w) + 20,
-                                  .y = (volume_bar.icon->rect.y + volume_bar.icon->rect.h/2) - progress_bar_h/4,
+                                  .y = (volume_bar.icon->rect.y + volume_bar.icon->rect.h/2) - 2.5,
                               },
                               WHITE,
                               NULL,
                               NULL,
                               WHITE,
                               NULL,
-                              BOX_COLOR_FILL
-                     ); 
+                              BOX_COLOR_FILL); 
 
     volume_bar.slider =  create_box(renderer, 
                               (SDL_FRect) {
@@ -452,8 +452,14 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               NULL,
                               WHITE,
                               NULL,
-                              BOX_NONE 
-                     ); 
+                              BOX_NONE); 
+
+    volume_bar.rect = (SDL_FRect) {
+                        .w = volume_bar.bar->rect.w,
+                        .h = volume_bar.icon->rect.h,
+                        .x = volume_bar.bar->rect.x,
+                        .y = volume_bar.icon->rect.y,
+    };
 
     slider = create_box(renderer, 
                               (SDL_FRect) {
@@ -514,6 +520,20 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               BOX_VISIBLE
                       ); 
 
+    current_song_name = create_box(renderer,
+                                   (SDL_FRect) {
+                                       .w = progress_bar->rect.w,
+                                       .h = 32,
+                                       .x = progress_bar->rect.x,
+                                       .y = progress_bar->rect.y - slider->rect.h - 16,
+                                   },
+                                   WHITE,
+                                   NULL,
+                                   "PLACEHOLDER",
+                                   WHITE,
+                                   NULL,
+                                   BOX_VISIBLE);
+
     for (size_t i = 0; i < ma_vars->playlist.mp3_list_size; i++) {
         new_sidebar_item(renderer, ma_vars);
     }
@@ -561,7 +581,7 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
         // CHECK CHECK CHECK CHECK CHECK
         if (event.key.keysym.sym == SDLK_RIGHT) {
             pause_pb(&ma_vars->pb_state);
-            i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate) + 5;
+            i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);
             if (t+5 >= (i32)(ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate)) {
                 t = ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate;
             } else {
@@ -648,9 +668,8 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
         volume_bar.slider->state |= BOX_VISIBLE;
     }
 
-    if (volume_bar.bar->state & BOX_HOVERED) {
+    if (volume_bar.bar->state & BOX_VISIBLE && check_mouse_rect_collision(mouse, volume_bar.rect)) {
         if (mouse_pressed(mouse)) {
-            printf("pressed\n");
             volume_bar.slider->rect.x = mouse.pos.x - volume_bar.slider->rect.w/2;
         }
     }
@@ -763,6 +782,8 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
         SDL_SetTextureColorMod(play_button->texture, 255, 255, 255);
     }
 
+//  SDL_RenderRect(renderer, &volume_bar.rect);
+
 }
 
 void print_playlist(playlist_t playlist) {
@@ -789,7 +810,7 @@ void print_pb_info(pb_info pb_info) {
     printf("  Frames cursor: %llu\n", pb_info.cursor);
     printf("  Last frames cursor: %llu\n", pb_info.last_cursor);
     time_24hrs(time, cursor_to_ms);
-    printf("  Progress: %s", time); 
+    printf("  Progress: %s\n", time); 
 
     printf("\n");
 }
@@ -801,6 +822,15 @@ void print_pb_state(pb_state pb_state) {
     printf("  Once: %d\n", pb_state&PB_ONCE);
     printf("  Loop: %d\n", pb_state&PB_LOOPING);
     printf("  Shuffle: %d\n", pb_state&PB_SHUFFLE);
+
+    printf("\n");
+}
+
+void print_playlist_info(playlist_t playlist) {
+    printf("[PLAYLIST INFO]\n");
+    printf("  Name: %s\n", playlist.name);
+    printf("  Playlist size: %zu\n", playlist.mp3_list_size);
+    printf("  Playlist current: %zu\n", playlist.current_mp3);
 
     printf("\n");
 }
