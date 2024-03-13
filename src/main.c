@@ -217,26 +217,37 @@ void debug() {
 //  print_pb_info(ma_vars.pb_info);
     print_pb_state(ma_vars.pb_state);
 
-
 }
 
 int main(int argc, char *argv[]) {
     srand(time(NULL));
-    int parse = parse_args(argc, argv); 
+    int parse = PLAYBACK_MP3;//parse_args(argc, argv); 
 
     print_args(argc, argv);
     printf("parse_result: %d\n\n", parse);
 
-    if (parse == PLAYBACK_WAV || parse == PLAYBACK_MP3 || parse == PLAYBACK_FLAC) {
+//    if (parse == PLAYBACK_WAV || parse == PLAYBACK_MP3 || parse == PLAYBACK_FLAC) {
         printf("Playback mode selected\n");
 
         ma_vars.decoder_config = ma_decoder_config_init(ma_format_f32, 2, 48000); 
         ma_vars.device_config = ma_device_config_init(ma_device_type_playback);
         ma_vars.device_config.dataCallback      = pb_callback;
         ma_vars.device_config.pUserData         = &ma_vars;
+        ma_vars.device_config.sampleRate = 48000;
 
-        ma_vars.playlist = create_playlist(argv[1]);
-    }
+        if (argc > 1) {
+            ma_vars.playlist = create_playlist(argv[1]);
+        } else {
+            ma_vars.playlist = (playlist_t) {
+                .dir = NULL,
+                .mp3_list_size = 0,
+                .mp3_list = NULL,
+                .current_mp3 = 0,
+            };
+            ma_vars.pb_state |= PB_PAUSED;
+
+        }
+//    }
 
     switch (parse) {
         case ERROR_NO_FILE:

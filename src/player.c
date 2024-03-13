@@ -73,11 +73,12 @@ void pb_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint3
 //      out = (f32*)pOutput;
 //      fft_out = (cmplx*)malloc(sizeof(cmplx) * frameCount);
 //      fft(out, 1, fft_out, frameCount);
+        ma_decoder_get_cursor_in_pcm_frames(&ma_vars->decoder, &ma_vars->pb_info.cursor);
     } else if (ma_vars->pb_state & PB_PAUSED) {
 
     }
-    ma_decoder_get_cursor_in_pcm_frames(&ma_vars->decoder, &ma_vars->pb_info.cursor);
-    frames_size = frameCount;
+
+//    frames_size = frameCount;
 
     (void)pInput;
 }
@@ -379,7 +380,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               },
                               WHITE,
                               NULL,
-                              "00:00:00",
+                              "00:00",
                               WHITE,
                               NULL,
                               BOX_VISIBLE); 
@@ -393,7 +394,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                               },
                               WHITE,
                               NULL,
-                              "00:00:00",
+                              "00:00",
                               WHITE,
                               NULL,
                               BOX_VISIBLE); 
@@ -529,16 +530,19 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                                    },
                                    WHITE,
                                    NULL,
-                                   " ",
+                                   "NO SONG",
                                    WHITE,
                                    NULL,
                                    BOX_VISIBLE);
 
-    for (size_t i = 0; i < ma_vars->playlist.mp3_list_size; i++) {
-        new_sidebar_item(renderer, ma_vars);
+    if (ma_vars->playlist.mp3_list_size > 0) {
+        for (size_t i = 0; i < ma_vars->playlist.mp3_list_size; i++) {
+            new_sidebar_item(renderer, ma_vars);
+        }
+        play_mp3(ma_vars->playlist.mp3_list[ma_vars->playlist.current_mp3], ma_vars);
     }
     ma_vars->pb_state |= PB_ONCE;
-    play_mp3(ma_vars->playlist.mp3_list[ma_vars->playlist.current_mp3], ma_vars);
+
 }
 
 void update_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
@@ -569,46 +573,6 @@ void render_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
 }
 
 void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mouse_t mouse) {
-    f32 sec = ((f32)ma_vars->pb_info.cursor/SAMPLE_RATE);
-    if (event.type == SDL_EVENT_KEY_DOWN) {
-        if (event.key.keysym.sym == SDLK_SPACE) {
-            if (ma_vars->pb_state & PB_PLAYING) {
-                pause_pb(&ma_vars->pb_state);
-            } else {
-                unpause_pb(&ma_vars->pb_state);
-            }
-        }
-        // CHECK CHECK CHECK CHECK CHECK
-        if (event.key.keysym.sym == SDLK_RIGHT) {
-            pause_pb(&ma_vars->pb_state);
-            i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);
-            if (t+5 >= (i32)(ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate)) {
-                t = ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate;
-            } else {
-                t += 5;
-            }
-            ma_vars->pb_info.cursor = t * ma_vars->pb_info.current_mp3.sample_rate;
-            ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, ma_vars->pb_info.cursor);
-            unpause_pb(&ma_vars->pb_state);
-        }
-        if (event.key.keysym.sym == SDLK_LEFT) {
-            pause_pb(&ma_vars->pb_state);
-            i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);
-            if (t-5 <= 0) {
-                t = 0;
-            } else {
-                t -= 5;
-            }
-            ma_vars->pb_info.cursor = t * ma_vars->pb_info.current_mp3.sample_rate;
-            ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, ma_vars->pb_info.cursor);
-            unpause_pb(&ma_vars->pb_state);
-        }
-
-    } else if (event.type == SDL_EVENT_KEY_UP) {
-
-
-    }
-
     if (event.type == SDL_EVENT_DROP_FILE) {
         const char *file = event.drop.data;
         printf("Dropped: %s\n", file);
@@ -617,6 +581,46 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
             play_mp3(new_mp3(file), ma_vars);
         }
     }
+    if (ma_vars->playlist.mp3_list_size > 0) {
+        f32 sec = ((f32)ma_vars->pb_info.cursor/SAMPLE_RATE);
+        if (event.type == SDL_EVENT_KEY_DOWN) {
+                if (event.key.keysym.sym == SDLK_SPACE) {
+                    if (ma_vars->pb_state & PB_PLAYING) {
+                        pause_pb(&ma_vars->pb_state);
+                    } else {
+                        unpause_pb(&ma_vars->pb_state);
+                    }
+                }
+                // CHECK CHECK CHECK CHECK CHECK
+                if (event.key.keysym.sym == SDLK_RIGHT) {
+                    pause_pb(&ma_vars->pb_state);
+                    i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);
+                    if (t+5 >= (i32)(ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate)) {
+                        t = ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate;
+                    } else {
+                        t += 5;
+                    }
+                    ma_vars->pb_info.cursor = t * ma_vars->pb_info.current_mp3.sample_rate;
+                    ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, ma_vars->pb_info.cursor);
+                    unpause_pb(&ma_vars->pb_state);
+                }
+                if (event.key.keysym.sym == SDLK_LEFT) {
+                    pause_pb(&ma_vars->pb_state);
+                    i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);
+                    if (t-5 <= 0) {
+                        t = 0;
+                    } else {
+                        t -= 5;
+                    }
+                    ma_vars->pb_info.cursor = t * ma_vars->pb_info.current_mp3.sample_rate;
+                    ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, ma_vars->pb_info.cursor);
+                    unpause_pb(&ma_vars->pb_state);
+                }
+        } else if (event.type == SDL_EVENT_KEY_UP) {
+
+
+        }
+
 
     if (err == MA_AT_END) {
         if (ma_vars->pb_state & PB_LOOPING) {
@@ -704,6 +708,7 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
     time_24hrs(time, ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);
     strcpy(time_left_box->text, time+3);
     time_left_box->new_text = true;
+    }
 
 }
 
@@ -712,12 +717,14 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
     slider->rect.y = progress_bar->rect.y - 10;
 
     if (progress_bar->state & BOX_HOVERED) {
-        if (mouse_clicked(mouse)) {
-            pause_pb(&ma_vars->pb_state);
-            u64 pos = ((ma_vars->pb_info.current_mp3.frames * (mouse.pos.x - progress_bar->rect.x) )/progress_bar->rect.w);
-            ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, pos); 
-            unpause_pb(&ma_vars->pb_state);
-        } 
+        if (ma_vars->playlist.mp3_list_size > 0) {
+            if (mouse_clicked(mouse)) {
+                pause_pb(&ma_vars->pb_state);
+                u64 pos = ((ma_vars->pb_info.current_mp3.frames * (mouse.pos.x - progress_bar->rect.x) )/progress_bar->rect.w);
+                ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, pos); 
+                unpause_pb(&ma_vars->pb_state);
+            } 
+        }
     }
 
     if (slider->state & BOX_HOVERED) {
@@ -727,37 +734,42 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
     }
 
     if (next_song_button->state & BOX_HOVERED) {
-        if (mouse_clicked(mouse)) {    
-            size_t t = 0;
-            if (ma_vars->pb_state & PB_SHUFFLE) {
-                t = rand()%ma_vars->playlist.mp3_list_size; 
-                while (t == ma_vars->playlist.current_mp3) {
+        if (ma_vars->playlist.mp3_list_size > 0) {
+            if (mouse_clicked(mouse)) {    
+                size_t t = 0;
+                if (ma_vars->pb_state & PB_SHUFFLE) {
                     t = rand()%ma_vars->playlist.mp3_list_size; 
+                    while (t == ma_vars->playlist.current_mp3) {
+                        t = rand()%ma_vars->playlist.mp3_list_size; 
+                    }
+                } else if (ma_vars->playlist.current_mp3 < ma_vars->playlist.mp3_list_size-1) {
+                    t = ma_vars->playlist.current_mp3 + 1;
+                } else {
+                    t = ma_vars->playlist.current_mp3 = 0;
                 }
-            } else if (ma_vars->playlist.current_mp3 < ma_vars->playlist.mp3_list_size-1) {
-                t = ma_vars->playlist.current_mp3 + 1;
-            } else {
-                t = ma_vars->playlist.current_mp3 = 0;
+                play_mp3(ma_vars->playlist.mp3_list[t], ma_vars);
+                ma_vars->playlist.current_mp3 = t;
             }
-            play_mp3(ma_vars->playlist.mp3_list[t], ma_vars);
-            ma_vars->playlist.current_mp3 = t;
         }
+
         SDL_SetTextureColorMod(next_song_button->texture, 150, 150, 150);
     } else {
         SDL_SetTextureColorMod(next_song_button->texture, 255, 255, 255);
     }
     if (prev_song_button->state & BOX_HOVERED) {
-        if (mouse_clicked(mouse)) {    
-            size_t t = 0;
-            if (ma_vars->pb_state & PB_SHUFFLE) {
-                t = rand()%ma_vars->playlist.mp3_list_size; 
-            } else if (ma_vars->playlist.current_mp3 > 0) {
-                t = ma_vars->playlist.current_mp3-1;
-            } else {
-                t = ma_vars->playlist.current_mp3 = ma_vars->playlist.mp3_list_size-1;
+        if (ma_vars->playlist.mp3_list_size > 0) {
+            if (mouse_clicked(mouse)) {    
+                size_t t = 0;
+                if (ma_vars->pb_state & PB_SHUFFLE) {
+                    t = rand()%ma_vars->playlist.mp3_list_size; 
+                } else if (ma_vars->playlist.current_mp3 > 0) {
+                    t = ma_vars->playlist.current_mp3-1;
+                } else {
+                    t = ma_vars->playlist.current_mp3 = ma_vars->playlist.mp3_list_size-1;
+                }
+                play_mp3(ma_vars->playlist.mp3_list[t], ma_vars);
+                ma_vars->playlist.current_mp3 = t;
             }
-            play_mp3(ma_vars->playlist.mp3_list[t], ma_vars);
-            ma_vars->playlist.current_mp3 = t;
         }
         SDL_SetTextureColorMod(prev_song_button->texture, 150, 150, 150);
     } else {
@@ -779,7 +791,6 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
                 ma_vars->pb_state |= PB_SHUFFLE;
                 pb_state_button->texture = button_textures[BUTTON_SHUFFLE];
             }
-
         }
         SDL_SetTextureColorMod(pb_state_button->texture, 150, 150, 150);
     } else {
@@ -794,18 +805,19 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
     }
 
     if (play_button->state & BOX_HOVERED) {
-        if (mouse_clicked(mouse)) {
-            if (ma_vars->pb_state & PB_PLAYING) {
-                pause_pb(&ma_vars->pb_state);
-            } else {
-                unpause_pb(&ma_vars->pb_state);
+        if (ma_vars->playlist.mp3_list_size > 0) {
+            if (mouse_clicked(mouse)) {
+                if (ma_vars->pb_state & PB_PLAYING) {
+                    pause_pb(&ma_vars->pb_state);
+                } else {
+                    unpause_pb(&ma_vars->pb_state);
+                }
             }
         }
         SDL_SetTextureColorMod(play_button->texture, 150, 150, 150);
     } else {
         SDL_SetTextureColorMod(play_button->texture, 255, 255, 255);
     }
-
 //  SDL_RenderRect(renderer, &volume_bar.rect);
 
 }
