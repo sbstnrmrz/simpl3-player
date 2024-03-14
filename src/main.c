@@ -233,18 +233,18 @@ int main(int argc, char *argv[]) {
 
         if (argc > 1) {
             if (check_directory(argv[1])) {
-                ma_vars.playlist = create_playlist(argv[1]);
+                ma_vars.pb_info.playlist = create_playlist(argv[1]);
             } else if (check_file_mp3(argv[1])){
                 add_mp3_to_playlist(engine.renderer, &ma_vars, new_mp3(argv[1]));
-                play_mp3(ma_vars.playlist.mp3_list[0], &ma_vars);
+                play_mp3(ma_vars.pb_info.playlist.mp3_list[0], &ma_vars);
             }
         } else {
-            ma_vars.playlist = (playlist_t) {
+            ma_vars.pb_info.playlist = (playlist_t) {
                 .name = "Playlist 1",
                 .dir = NULL,
                 .mp3_list_size = 0,
                 .mp3_list = NULL,
-                .current_mp3 = 0,
+                .curr_mp3 = 0,
             };
             ma_vars.pb_info.state |= PB_PAUSED;
 

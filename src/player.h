@@ -35,7 +35,7 @@ void add_mp3_to_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const mp3_t
 playlist_t create_playlist(const char *dir);
 
 void print_playlist(playlist_t playlist);
-void print_pb_info(pb_info pb_info);
+void print_pb_info(pb_info_t pb_info);
 void print_pb_state(pb_state pb_state);
 void print_playlist_info(playlist_t playlist);
 

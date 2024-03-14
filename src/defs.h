@@ -100,15 +100,15 @@ typedef struct {
     const char *dir;
     mp3_t *mp3_list;
     size_t mp3_list_size;
-    size_t current_mp3;
+    mp3_t curr_mp3;
+    size_t curr_mp3_ind;
 } playlist_t;
 
 typedef struct {
-    mp3_t current_mp3;
+    playlist_t playlist;
     u64 cursor;
-    u64 last_cursor;
     pb_state state;
-} pb_info;
+} pb_info_t;
 
 typedef struct {
     ma_context        context;
@@ -116,8 +116,7 @@ typedef struct {
     ma_decoder_config decoder_config;
     ma_device         device;
     ma_device_config  device_config;
-    pb_info           pb_info;
-    playlist_t        playlist;
+    pb_info_t         pb_info;
 } ma_vars_t;
 
 #endif // DEFS_H
