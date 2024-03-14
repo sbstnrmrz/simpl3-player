@@ -107,6 +107,7 @@ typedef struct {
     mp3_t current_mp3;
     u64 cursor;
     u64 last_cursor;
+    pb_state state;
 } pb_info;
 
 typedef struct {
@@ -116,7 +117,6 @@ typedef struct {
     ma_device         device;
     ma_device_config  device_config;
     pb_info           pb_info;
-    pb_state          pb_state;
     playlist_t        playlist;
 } ma_vars_t;
 

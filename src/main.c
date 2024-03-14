@@ -181,7 +181,7 @@ void render() {
     SDL_SetRenderDrawColor(engine.renderer, BLACK.r, BLACK.g, BLACK.b, BLACK.a);
     SDL_RenderClear(engine.renderer);
  
-    if (ma_vars.pb_state == PB_PLAYING) {
+    if (ma_vars.pb_info.state == PB_PLAYING) {
 
     }
 
@@ -210,7 +210,7 @@ void debug() {
 //  print_mouse_info(engine.mouse);
 //  print_playlist_info(ma_vars.playlist);
 //  print_pb_info(ma_vars.pb_info);
-    print_pb_state(ma_vars.pb_state);
+//    print_pb_state(ma_vars.pb_state);
 
 }
 
@@ -246,7 +246,7 @@ int main(int argc, char *argv[]) {
                 .mp3_list = NULL,
                 .current_mp3 = 0,
             };
-            ma_vars.pb_state |= PB_PAUSED;
+            ma_vars.pb_info.state |= PB_PAUSED;
 
         }
 //    }
