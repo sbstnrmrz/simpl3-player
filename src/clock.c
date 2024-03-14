@@ -1,5 +1,4 @@
 #include "clock.h"
-#include <stdio.h>
 
 void start_clock(Clock *clock) {
     if (clock->state & CLK_PAUSED) {

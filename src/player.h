@@ -31,7 +31,7 @@ bool check_file_wav(const char* file);
 bool check_directory(const char *directory);
 mp3_t new_mp3(const char *mp3_file);
 void play_mp3(mp3_t mp3, ma_vars_t *ma_vars);
-void add_mp3_to_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const char *filename);
+void add_mp3_to_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const mp3_t mp3);
 playlist_t create_playlist(const char *dir);
 
 void print_playlist(playlist_t playlist);

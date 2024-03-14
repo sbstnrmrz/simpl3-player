@@ -128,7 +128,7 @@ bool check_directory(const char *directory) {
     struct stat st = {0};
     if (stat(directory, &st) < 0) {
        fprintf(stderr, "Error checking directory with stat!\n"); 
-       exit(1);
+       return false;
     }
 
     if (S_ISDIR(st.st_mode)) {
@@ -305,17 +305,9 @@ void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
     sidebar_box_arr_size++;
 }
 
-void add_mp3_to_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const char *filename) {
+void add_mp3_to_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const mp3_t mp3) {
     // should pass a mp3_t instead of string
     ma_vars->playlist.mp3_list = realloc(ma_vars->playlist.mp3_list, sizeof(mp3_t) * (ma_vars->playlist.mp3_list_size+1));
-    mp3_t mp3 = {
-        .frames = 0,
-        .sample_rate = 0,
-        .channels = 0
-    };
-    strcpy(mp3.dir, filename);
-    char *str = strrchr(filename, '/')+1;
-    strncpy(mp3.filename, str, strlen(str)-4);
 
     ma_vars->playlist.mp3_list[ma_vars->playlist.mp3_list_size] = mp3; 
     ma_vars->playlist.current_mp3 = ma_vars->playlist.mp3_list_size; 
@@ -407,7 +399,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                                 .y = (f32)WIN_HEIGHT/2 + 32,
                               },
                               WHITE,
-                              button_textures[BUTTON_PLAY],
+                              IMG_LoadTexture(renderer, "assets/buttons/play.png"),
                               NULL,
                               WHITE,
                               NULL,
@@ -421,7 +413,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                                       .y = (play_button->rect.y + 32) + 32,
                                   },
                                   WHITE,
-                                  button_textures[BUTTON_VOLUME],
+                                  IMG_LoadTexture(renderer, "assets/buttons/volume.png"),
                                   NULL,
                                   WHITE,
                                   NULL,
@@ -485,7 +477,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                                 .h = 32,
                               },
                               WHITE,
-                              button_textures[BUTTON_PREV_SONG],
+                              IMG_LoadTexture(renderer, "assets/buttons/prev.png"),
                               NULL,
                               WHITE,
                               NULL,
@@ -499,7 +491,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                                 .h = 32,
                               },
                               WHITE,
-                              button_textures[BUTTON_NEXT_SONG],
+                              IMG_LoadTexture(renderer, "assets/buttons/next.png"),
                               NULL,
                               WHITE,
                               NULL,
@@ -577,139 +569,137 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
         const char *file = event.drop.data;
         printf("Dropped: %s\n", file);
         if (check_file_mp3(file)) {
-            add_mp3_to_playlist(renderer, ma_vars, file);
-            play_mp3(new_mp3(file), ma_vars);
+            add_mp3_to_playlist(renderer, ma_vars, new_mp3(file));
+            play_mp3(ma_vars->playlist.mp3_list[ma_vars->playlist.current_mp3], ma_vars);
         }
     }
     if (ma_vars->playlist.mp3_list_size > 0) {
         f32 sec = ((f32)ma_vars->pb_info.cursor/SAMPLE_RATE);
         if (event.type == SDL_EVENT_KEY_DOWN) {
-                if (event.key.keysym.sym == SDLK_SPACE) {
-                    if (ma_vars->pb_state & PB_PLAYING) {
-                        pause_pb(&ma_vars->pb_state);
-                    } else {
-                        unpause_pb(&ma_vars->pb_state);
-                    }
-                }
-                // CHECK CHECK CHECK CHECK CHECK
-                if (event.key.keysym.sym == SDLK_RIGHT) {
+            if (event.key.keysym.sym == SDLK_SPACE) {
+                if (ma_vars->pb_state & PB_PLAYING) {
                     pause_pb(&ma_vars->pb_state);
-                    i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);
-                    if (t+5 >= (i32)(ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate)) {
-                        t = ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate;
-                    } else {
-                        t += 5;
-                    }
-                    ma_vars->pb_info.cursor = t * ma_vars->pb_info.current_mp3.sample_rate;
-                    ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, ma_vars->pb_info.cursor);
+                } else {
                     unpause_pb(&ma_vars->pb_state);
                 }
-                if (event.key.keysym.sym == SDLK_LEFT) {
-                    pause_pb(&ma_vars->pb_state);
-                    i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);
-                    if (t-5 <= 0) {
-                        t = 0;
-                    } else {
-                        t -= 5;
-                    }
-                    ma_vars->pb_info.cursor = t * ma_vars->pb_info.current_mp3.sample_rate;
-                    ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, ma_vars->pb_info.cursor);
-                    unpause_pb(&ma_vars->pb_state);
+            }
+            // CHECK CHECK CHECK CHECK CHECK
+            if (event.key.keysym.sym == SDLK_RIGHT) {
+                pause_pb(&ma_vars->pb_state);
+                i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);
+                if (t+5 >= (i32)(ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate)) {
+                    t = ma_vars->pb_info.current_mp3.frames/ma_vars->pb_info.current_mp3.sample_rate;
+                } else {
+                    t += 5;
                 }
+                ma_vars->pb_info.cursor = t * ma_vars->pb_info.current_mp3.sample_rate;
+                ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, ma_vars->pb_info.cursor);
+                unpause_pb(&ma_vars->pb_state);
+            }
+            if (event.key.keysym.sym == SDLK_LEFT) {
+                pause_pb(&ma_vars->pb_state);
+                i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);
+                if (t-5 <= 0) {
+                    t = 0;
+                } else {
+                    t -= 5;
+                }
+                ma_vars->pb_info.cursor = t * ma_vars->pb_info.current_mp3.sample_rate;
+                ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, ma_vars->pb_info.cursor);
+                unpause_pb(&ma_vars->pb_state);
+            }
         } else if (event.type == SDL_EVENT_KEY_UP) {
 
 
         }
 
+        if (err == MA_AT_END) {
+            if (ma_vars->pb_state & PB_LOOPING) {
+                pause_pb(&ma_vars->pb_state);
+                ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, 0);
+                unpause_pb(&ma_vars->pb_state);
+            }
+            if (ma_vars->pb_state & PB_ONCE) {
+                printf("Playback has finished!\n"); 
+                exit(1);
+            }
+            if (ma_vars->pb_state & PB_SHUFFLE) {
+                size_t ran = rand()%ma_vars->playlist.mp3_list_size;
 
-    if (err == MA_AT_END) {
-        if (ma_vars->pb_state & PB_LOOPING) {
-            pause_pb(&ma_vars->pb_state);
-            ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, 0);
-            unpause_pb(&ma_vars->pb_state);
-        }
-        if (ma_vars->pb_state & PB_ONCE) {
-            printf("Playback has finished!\n"); 
+                pause_pb(&ma_vars->pb_state);
+                play_mp3(ma_vars->playlist.mp3_list[ran], ma_vars);
+                unpause_pb(&ma_vars->pb_state);
+                ma_vars->playlist.current_mp3 = ran;
+            }
+        } else if (err != MA_SUCCESS) {
+            fprintf(stderr, "An error has ocurred. ma_result: %d\n", err);
             exit(1);
         }
-        if (ma_vars->pb_state & PB_SHUFFLE) {
-            size_t ran = rand()%ma_vars->playlist.mp3_list_size;
 
-            pause_pb(&ma_vars->pb_state);
-            play_mp3(ma_vars->playlist.mp3_list[ran], ma_vars);
-            unpause_pb(&ma_vars->pb_state);
-            ma_vars->playlist.current_mp3 = ran;
+        for (size_t i = 0; i < sidebar_box_arr_size; i++) {
+            if (sidebar_box_arr[i]->state & BOX_HOVERED) {
+                SDL_SetTextureColorMod(sidebar_box_arr[i]->font_texture, 150, 150, 150);
+                if (mouse_clicked(mouse) && i != ma_vars->playlist.current_mp3) {
+                    play_mp3(ma_vars->playlist.mp3_list[i], ma_vars); 
+                    ma_vars->playlist.current_mp3 = i;
+                }
+            } else {
+                SDL_SetTextureColorMod(sidebar_box_arr[i]->font_texture, 255, 255, 255);
+            }
         }
-    } else if (err != MA_SUCCESS) {
-        fprintf(stderr, "An error has ocurred. ma_result: %d\n", err);
-        exit(1);
-    }
+        SDL_SetTextureColorMod(sidebar_box_arr[ma_vars->playlist.current_mp3]->font_texture, 150, 150, 150);
 
-    for (size_t i = 0; i < sidebar_box_arr_size; i++) {
-        if (sidebar_box_arr[i]->state & BOX_HOVERED) {
-            SDL_SetTextureColorMod(sidebar_box_arr[i]->font_texture, 150, 150, 150);
-            if (mouse_clicked(mouse) && i != ma_vars->playlist.current_mp3) {
-                play_mp3(ma_vars->playlist.mp3_list[i], ma_vars); 
-                ma_vars->playlist.current_mp3 = i;
+        static f32 vol = 0; 
+        static f32 last_vol = 0;
+        printf("VOL: %0.f | LASTVOL: %0.f\n", vol*100, last_vol*100);
+
+        ma_device_get_master_volume(&ma_vars->device, &vol); 
+        if (vol > 0) {
+            ma_vars->pb_state &= ~PB_MUTED;
+            last_vol = vol;
+        } else {
+            ma_vars->pb_state |= PB_MUTED;
+        }
+        volume_bar.slider->rect.x = volume_bar.bar->rect.x + (vol*100) - volume_bar.slider->rect.w/2; 
+        if (volume_bar.icon->state & BOX_HOVERED) {
+            SDL_SetTextureColorMod(volume_bar.icon->texture, 150, 150, 150);
+            volume_bar.bar->state |= BOX_VISIBLE;
+            volume_bar.slider->state |= BOX_VISIBLE;
+            if (mouse_clicked(mouse)) {
+                if (ma_vars->pb_state & PB_MUTED) {
+                    ma_vars->pb_state &= ~PB_MUTED;
+                    ma_device_set_master_volume(&ma_vars->device, last_vol);
+                } else {
+                    ma_vars->pb_state |= PB_MUTED;
+                    ma_device_set_master_volume(&ma_vars->device, 0);
+                }
             }
         } else {
-            SDL_SetTextureColorMod(sidebar_box_arr[i]->font_texture, 255, 255, 255);
+            SDL_SetTextureColorMod(volume_bar.icon->texture, 255, 255, 255);
+    //      volume_bar.bar->state &= ~BOX_VISIBLE;
+    //      volume_bar.slider->state &= ~BOX_VISIBLE;
+            volume_bar.bar->state |= BOX_VISIBLE;
+            volume_bar.slider->state |= BOX_VISIBLE;
         }
-    }
-    SDL_SetTextureColorMod(sidebar_box_arr[ma_vars->playlist.current_mp3]->font_texture, 150, 150, 150);
 
-    static f32 vol = 0; 
-    static f32 last_vol = 0;
-    printf("VOL: %0.f | LASTVOL: %0.f\n", vol*100, last_vol*100);
-
-    ma_device_get_master_volume(&ma_vars->device, &vol); 
-    if (vol > 0) {
-        ma_vars->pb_state &= ~PB_MUTED;
-        last_vol = vol;
-    } else {
-        ma_vars->pb_state |= PB_MUTED;
-    }
-    volume_bar.slider->rect.x = volume_bar.bar->rect.x + (vol*100) - volume_bar.slider->rect.w/2; 
-    if (volume_bar.icon->state & BOX_HOVERED) {
-        SDL_SetTextureColorMod(volume_bar.icon->texture, 150, 150, 150);
-        volume_bar.bar->state |= BOX_VISIBLE;
-        volume_bar.slider->state |= BOX_VISIBLE;
-        if (mouse_clicked(mouse)) {
-            if (ma_vars->pb_state & PB_MUTED) {
-                ma_vars->pb_state &= ~PB_MUTED;
-                ma_device_set_master_volume(&ma_vars->device, last_vol);
-            } else {
-                ma_vars->pb_state |= PB_MUTED;
-                ma_device_set_master_volume(&ma_vars->device, 0);
+        if (volume_bar.bar->state & BOX_VISIBLE && check_mouse_rect_collision(mouse, volume_bar.rect)) {
+            if (mouse_pressed(mouse)) {
+                volume_bar.slider->rect.x = mouse.pos.x - volume_bar.slider->rect.w/2;
+                i32 t = (volume_bar.slider->rect.x + volume_bar.slider->rect.w/2) - volume_bar.bar->rect.x;
+                ma_device_set_master_volume(&ma_vars->device, (f32)t/100);
             }
         }
-    } else {
-        SDL_SetTextureColorMod(volume_bar.icon->texture, 255, 255, 255);
-//      volume_bar.bar->state &= ~BOX_VISIBLE;
-//      volume_bar.slider->state &= ~BOX_VISIBLE;
-        volume_bar.bar->state |= BOX_VISIBLE;
-        volume_bar.slider->state |= BOX_VISIBLE;
-    }
-
-    if (volume_bar.bar->state & BOX_VISIBLE && check_mouse_rect_collision(mouse, volume_bar.rect)) {
-        if (mouse_pressed(mouse)) {
-            volume_bar.slider->rect.x = mouse.pos.x - volume_bar.slider->rect.w/2;
-            i32 t = (volume_bar.slider->rect.x + volume_bar.slider->rect.w/2) - volume_bar.bar->rect.x;
-            ma_device_set_master_volume(&ma_vars->device, (f32)t/100);
+        if (volume_bar.slider->state & BOX_HOVERED) {
+            SDL_SetTextureColorMod(volume_bar.slider->texture, 150, 150, 150);
+        } else {
+            SDL_SetTextureColorMod(volume_bar.slider->texture, 255, 255, 255);
         }
-    }
-    if (volume_bar.slider->state & BOX_HOVERED) {
-        SDL_SetTextureColorMod(volume_bar.slider->texture, 150, 150, 150);
-    } else {
-        SDL_SetTextureColorMod(volume_bar.slider->texture, 255, 255, 255);
-    }
 
-    char time[10] = {0};
-    time_24hrs(time, ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);
-    strcpy(time_left_box->text, time+3);
-    time_left_box->new_text = true;
+        char time[10] = {0};
+        time_24hrs(time, ma_vars->pb_info.cursor/ma_vars->pb_info.current_mp3.sample_rate);
+        strcpy(time_left_box->text, time+3);
+        time_left_box->new_text = true;
     }
-
 }
 
 void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) { 
@@ -751,7 +741,6 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
                 ma_vars->playlist.current_mp3 = t;
             }
         }
-
         SDL_SetTextureColorMod(next_song_button->texture, 150, 150, 150);
     } else {
         SDL_SetTextureColorMod(next_song_button->texture, 255, 255, 255);

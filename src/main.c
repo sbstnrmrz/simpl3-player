@@ -12,11 +12,6 @@ struct {
     SDL_Renderer *renderer;
 } engine;
 
-Clock pressClock = {
-    .start_ms = 0,
-    .current_ms = 0,
-    .state = CLK_PAUSED
-};
 ma_vars_t ma_vars = {0};
 
 void print_args(int argc, char *argv[]) {
@@ -221,6 +216,7 @@ void debug() {
 
 int main(int argc, char *argv[]) {
     srand(time(NULL));
+    init_sdl("siMPl3 PLAYER", WIN_WIDTH, WIN_HEIGHT, 0);
     int parse = PLAYBACK_MP3;//parse_args(argc, argv); 
 
     print_args(argc, argv);
@@ -236,9 +232,15 @@ int main(int argc, char *argv[]) {
         ma_vars.device_config.sampleRate = 48000;
 
         if (argc > 1) {
-            ma_vars.playlist = create_playlist(argv[1]);
+            if (check_directory(argv[1])) {
+                ma_vars.playlist = create_playlist(argv[1]);
+            } else if (check_file_mp3(argv[1])){
+                add_mp3_to_playlist(engine.renderer, &ma_vars, new_mp3(argv[1]));
+                play_mp3(ma_vars.playlist.mp3_list[0], &ma_vars);
+            }
         } else {
             ma_vars.playlist = (playlist_t) {
+                .name = "Playlist 1",
                 .dir = NULL,
                 .mp3_list_size = 0,
                 .mp3_list = NULL,
@@ -270,7 +272,6 @@ int main(int argc, char *argv[]) {
     }
     printf("Context initialized\n");
 
-    init_sdl("siMPl3 PLAYER", WIN_WIDTH, WIN_HEIGHT, 0);
     init_player(engine.renderer, &ma_vars);
 
     if (ma_device_init(NULL, &ma_vars.device_config, &ma_vars.device) != MA_SUCCESS) {
