@@ -192,7 +192,7 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     ma_vars->device_config.playback.format   = ma_vars->decoder.outputFormat;
     ma_vars->device_config.playback.channels = ma_vars->decoder.outputChannels;
     ma_vars->device_config.sampleRate        = ma_vars->decoder.outputSampleRate;
-    ma_decoder_get_length_in_pcm_frames(&ma_vars->decoder, &mp3.frames);
+    ma_decoder_get_length_in_pcm_frames(&ma_vars->decoder, &ma_vars->pb_info.playlist.curr_mp3.frames);
 
     switch (ma_vars->decoder.outputFormat) {
     case ma_format_u8:
@@ -215,7 +215,7 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
        break; 
     }
 
-//    strcpy(ma_vars->pb_info.playlist.curr_mp3.filename, mp3.filename);
+    strcpy(ma_vars->pb_info.playlist.curr_mp3.filename, mp3.filename);
     ma_vars->pb_info.playlist.curr_mp3.sample_rate = ma_vars->decoder.outputSampleRate;
     ma_vars->pb_info.playlist.curr_mp3.channels = ma_vars->decoder.outputChannels;
 
@@ -223,7 +223,7 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
 
     char time[10] = {0};
 
-    time_24hrs(time, mp3.frames/mp3.sample_rate);
+    time_24hrs(time, ma_vars->pb_info.playlist.curr_mp3.frames/ma_vars->pb_info.playlist.curr_mp3.sample_rate);
     strcpy(total_time_box->text, time+3);
     total_time_box->new_text = true;
 
@@ -736,7 +736,7 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
                 size_t ran = 0;
                 if (ma_vars->pb_info.state & PB_SHUFFLE) {
                     ran = rand()%ma_vars->pb_info.playlist.mp3_list_size; 
-                    while (ran == ma_vars->pb_info.playlist.curr_mp3_ind) {
+                    while (ran == ma_vars->pb_info.playlist.curr_mp3_ind && ma_vars->pb_info.playlist.mp3_list_size > 1) {
                         ran = rand()%ma_vars->pb_info.playlist.mp3_list_size; 
                     }
                     ma_vars->pb_info.playlist.curr_mp3_ind = ran;
@@ -759,7 +759,7 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
                 size_t ran = 0;
                 if (ma_vars->pb_info.state & PB_SHUFFLE) {
                     ran = rand()%ma_vars->pb_info.playlist.mp3_list_size; 
-                    while (ran == ma_vars->pb_info.playlist.curr_mp3_ind) {
+                    while (ran == ma_vars->pb_info.playlist.curr_mp3_ind && ma_vars->pb_info.playlist.mp3_list_size > 1) {
                         ran = rand()%ma_vars->pb_info.playlist.mp3_list_size; 
                     }
                     ma_vars->pb_info.playlist.curr_mp3_ind = ran;

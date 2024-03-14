@@ -236,7 +236,7 @@ int main(int argc, char *argv[]) {
                 ma_vars.pb_info.playlist = create_playlist(argv[1]);
             } else if (check_file_mp3(argv[1])){
                 add_mp3_to_playlist(engine.renderer, &ma_vars, new_mp3(argv[1]));
-                play_mp3(ma_vars.pb_info.playlist.mp3_list[0], &ma_vars);
+                play_mp3(ma_vars.pb_info.playlist.curr_mp3, &ma_vars);
             }
         } else {
             ma_vars.pb_info.playlist = (playlist_t) {
