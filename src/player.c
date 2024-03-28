@@ -183,7 +183,6 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
         fprintf(stderr, "Failed to open '%s' mp3 file. MA_ERROR: %d\n", mp3.filename, err);
         exit(1);
     }
-    printf("Opened %s\n", mp3.dir);
 
     ma_vars->device_config.playback.format   = ma_vars->decoder.outputFormat;
     ma_vars->device_config.playback.channels = ma_vars->decoder.outputChannels;
@@ -227,7 +226,41 @@ void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     current_song_name->new_text = true;
 }
 
-playlist_t create_playlist(const char *dir_name) {
+void next_song(ma_vars_t *ma_vars) {
+    size_t ind = 0;
+    if (ma_vars->pb_info.state & PB_SHUFFLE) {
+        ind = rand()%ma_vars->pb_info.playlist.mp3_list_size; 
+        while (ind == ma_vars->pb_info.playlist.curr_mp3_ind && ma_vars->pb_info.playlist.mp3_list_size > 1) {
+            ind = rand()%ma_vars->pb_info.playlist.mp3_list_size; 
+        }
+        ma_vars->pb_info.playlist.curr_mp3_ind = ind;
+    } else if (ma_vars->pb_info.playlist.curr_mp3_ind < ma_vars->pb_info.playlist.mp3_list_size-1) {
+        ma_vars->pb_info.playlist.curr_mp3_ind += 1;
+    } else {
+        ma_vars->pb_info.playlist.curr_mp3_ind = 0;
+    }
+    ma_vars->pb_info.playlist.curr_mp3 = ma_vars->pb_info.playlist.mp3_list[ma_vars->pb_info.playlist.curr_mp3_ind];
+    play_mp3(ma_vars->pb_info.playlist.curr_mp3, ma_vars);
+}
+
+void prev_song(ma_vars_t *ma_vars) {
+    size_t ind = 0;
+    if (ma_vars->pb_info.state & PB_SHUFFLE) {
+        ind = rand()%ma_vars->pb_info.playlist.mp3_list_size; 
+        while (ind == ma_vars->pb_info.playlist.curr_mp3_ind && ma_vars->pb_info.playlist.mp3_list_size > 1) {
+            ind = rand()%ma_vars->pb_info.playlist.mp3_list_size; 
+        }
+        ma_vars->pb_info.playlist.curr_mp3_ind = ind;
+    } else if (ma_vars->pb_info.playlist.curr_mp3_ind > 0) {
+        ma_vars->pb_info.playlist.curr_mp3_ind -= 1;
+    } else {
+        ma_vars->pb_info.playlist.curr_mp3_ind = ma_vars->pb_info.playlist.mp3_list_size-1;
+    }
+    ma_vars->pb_info.playlist.curr_mp3 = ma_vars->pb_info.playlist.mp3_list[ma_vars->pb_info.playlist.curr_mp3_ind];
+    play_mp3(ma_vars->pb_info.playlist.curr_mp3, ma_vars);
+}
+
+playlist_t create_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const char *dir_name) {
     playlist_t result = {
         .name = "playlist",
         .dir = dir_name,
@@ -243,7 +276,6 @@ playlist_t create_playlist(const char *dir_name) {
         fprintf(stderr, "Could not open directory: %s\n", dir_name);
         exit(1);
     }
-
     de de = {0};
     
     de = readdir(dir);
@@ -255,24 +287,28 @@ playlist_t create_playlist(const char *dir_name) {
                 strcpy(str, dir_name);
                 strcat(str, de->d_name);
                 result.mp3_list[result.mp3_list_size] = new_mp3(str);
-                printf("result %zu: %s\n", result.mp3_list_size, result.mp3_list[result.mp3_list_size].filename);
+                printf("result %zu: %s\n", result.mp3_list_size, result.mp3_list[result.mp3_list_size].dir);
                 result.mp3_list_size++;
+
             }
         }
         de = readdir(dir);
     }
     closedir(dir);
+
+    for (size_t i = 0; i < result.mp3_list_size; i++) {
+        new_sidebar_item(renderer, ma_vars, result.mp3_list[i]);
+    }
+    result.curr_mp3_ind = 0;
     result.curr_mp3 = result.mp3_list[result.curr_mp3_ind];
 
     return result;
 }
 
-void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
+void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars, mp3_t mp3) {
     sidebar_box_arr = realloc(sidebar_box_arr, sizeof(box_t*) * (sidebar_box_arr_size+1));
     char file[128] = {0};
-    strncpy(file, 
-            ma_vars->pb_info.playlist.mp3_list[sidebar_box_arr_size].filename, 
-            strlen(ma_vars->pb_info.playlist.mp3_list[sidebar_box_arr_size].filename)-4);
+    strcpy(file, mp3.filename);
 
     sidebar_box_arr[sidebar_box_arr_size] = create_box(renderer, 
                                                       (SDL_FRect) {
@@ -290,6 +326,8 @@ void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
     if (sidebar_open) {
          sidebar_box_arr[sidebar_box_arr_size]->state |= BOX_VISIBLE;   
     }
+    printf("MP3 added to the sidebar: %s\n", mp3.dir);
+
     sidebar_box_arr_size++;
 }
 
@@ -300,7 +338,7 @@ void add_mp3_to_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const mp3_t
     ma_vars->pb_info.playlist.curr_mp3_ind = ma_vars->pb_info.playlist.mp3_list_size; 
     ma_vars->pb_info.playlist.curr_mp3 = mp3;
     ma_vars->pb_info.playlist.mp3_list_size++;
-    new_sidebar_item(renderer, ma_vars);
+    new_sidebar_item(renderer, ma_vars, mp3);
 }
 
 void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
@@ -514,12 +552,12 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                                    NULL,
                                    BOX_VISIBLE);
 
-    if (ma_vars->pb_info.playlist.mp3_list_size > 0) {
-        for (size_t i = 0; i < ma_vars->pb_info.playlist.mp3_list_size; i++) {
-            new_sidebar_item(renderer, ma_vars);
-        }
-        play_mp3(ma_vars->pb_info.playlist.curr_mp3, ma_vars);
-    }
+//  if (ma_vars->pb_info.playlist.mp3_list_size > 0) {
+//      for (size_t i = 0; i < ma_vars->pb_info.playlist.mp3_list_size; i++) {
+//          new_sidebar_item(renderer, ma_vars);
+//      }
+//      play_mp3(ma_vars->pb_info.playlist.curr_mp3, ma_vars);
+//  }
     ma_vars->pb_info.state |= PB_ONCE;
 
 }
@@ -599,8 +637,12 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
                 unpause_pb(&ma_vars->pb_info.state);
             }
             if (ma_vars->pb_info.state & PB_ONCE) {
-                printf("Playback has finished!\n"); 
-                exit(1);
+                if (ma_vars->pb_info.playlist.mp3_list_size > 1) {
+                    next_song(ma_vars);
+                } else {
+                    printf("Playback has finished!\n"); 
+                    exit(1);
+                }
             }
             if (ma_vars->pb_info.state & PB_SHUFFLE) {
                 size_t ran = rand()%ma_vars->pb_info.playlist.mp3_list_size;

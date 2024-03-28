@@ -77,7 +77,7 @@ typedef enum {
 
 typedef enum {
     ERROR_NO_FILE = -3,
-    ERROR_NOCOMMAND = -2,
+    ERROR_NO_COMMAND = -2,
     ERROR_FILETYPE = -1,
     PLAYBACK_WAV = 1,
     PLAYBACK_MP3,

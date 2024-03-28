@@ -47,7 +47,7 @@ void print_pb_file_info(const char *filename, u64 total_frames, u8 channels, u32
 
 int parse_args(int argc, char *argv[]) {
     if (argc < 1) {
-        return ERROR_NOCOMMAND;
+        return ERROR_NO_COMMAND;
     } else if (argc > 2) {
         fprintf(stderr, "Only two commands can be used\n");
         exit(1);
@@ -56,47 +56,10 @@ int parse_args(int argc, char *argv[]) {
     size_t len = strlen(argv[1]);
     if (check_directory(argv[1]) && *(argv[1]+len-1) != '/') {
         argv[1] = strcat(argv[1], "/"); 
+        return PLAYBACK_MP3;
     }
-    printf("sirve\n");
-
-
-
-
-//  if (*argv[1] == '-') {
-//      if (*(argv[1]+1) == 'p') {
-//          char *file = strchr(argv[2], '.');
-//          if (file == NULL) {
-//              return PLAYBACK_MP3;
-//          }
-//          while(file != NULL) {
-//              if (strcasecmp(file+1, "wav") || strcasecmp(file+1, "mp3") || strcasecmp(file+1, "flac")) {
-//                  break;
-//              }
-//              if (strcasecmp(file+1, "wav")) {
-//                  return PLAYBACK_WAV;
-//              }
-//              if (strcasecmp(file+1, "mp3")) {
-//                  return PLAYBACK_MP3;
-//              }
-//              if (strcasecmp(file+1, "flac")) {
-//                  return PLAYBACK_FLAC;
-//              }
-//              file = strchr(argv[2]+1, '.');
-//          } 
-//          return ERROR_FILETYPE; 
-//      }
-//      if (*(argv[1]+1) == 'h') {
-//          return PRINT_HELP;
-//      }
-
-//  }
  
-    return PLAYBACK_MP3;
-}
-
-void print_parse_info(parse_result result) {
-
-
+    return ERROR_NO_COMMAND;
 }
 
 void print_devices(ma_context *context) {
@@ -158,11 +121,6 @@ void init_sdl(const char *title, int win_width, int win_height, u32 flags) {
 
 }
 
-void handle_events() {
-
-
-}
-
 void update() {
     SDL_Event event;
     SDL_PollEvent(&event);
@@ -210,7 +168,7 @@ void debug() {
 //  print_mouse_info(engine.mouse);
 //  print_playlist_info(ma_vars.playlist);
 //  print_pb_info(ma_vars.pb_info);
-//    print_pb_state(ma_vars.pb_state);
+//  print_pb_state(ma_vars.pb_state);
 
 }
 
@@ -223,7 +181,6 @@ int main(int argc, char *argv[]) {
     printf("parse_result: %d\n\n", parse);
 
     printf("Playback mode selected\n");
-
     init_player(engine.renderer, &ma_vars);
 
     ma_vars.decoder_config             = ma_decoder_config_init(ma_format_f32, 2, 48000); 
@@ -234,12 +191,10 @@ int main(int argc, char *argv[]) {
 
     if (argc > 1) {
         if (check_directory(argv[1])) {
-            printf("DIRECTORY\n");
-            ma_vars.pb_info.playlist = create_playlist(argv[1]);
+            ma_vars.pb_info.playlist = create_playlist(engine.renderer, &ma_vars, argv[1]);
+            play_mp3(ma_vars.pb_info.playlist.curr_mp3, &ma_vars);
         } else if (check_file_mp3(argv[1])) {
-            printf("MP3\n");
             add_mp3_to_playlist(engine.renderer, &ma_vars, new_mp3(argv[1]));
-            printf("Added to playlist!\n");
             play_mp3(ma_vars.pb_info.playlist.curr_mp3, &ma_vars);
         }
     } else {
@@ -252,7 +207,6 @@ int main(int argc, char *argv[]) {
             .curr_mp3 = 0,
         };
         ma_vars.pb_info.state |= PB_PAUSED;
-
     }
 
     if (ma_context_init(NULL, 0, NULL, &ma_vars.context) != MA_SUCCESS) {
@@ -260,8 +214,6 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     printf("Context initialized\n");
-
-
 
     if (ma_device_init(NULL, &ma_vars.device_config, &ma_vars.device) != MA_SUCCESS) {
         fprintf(stderr, "Failed to initialize device!\n");
@@ -275,9 +227,8 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     printf("Device started\n");
-    
+
 	while(engine.running) {
-		handle_events();
         update();
         render();
         debug();
