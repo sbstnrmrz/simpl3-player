@@ -8,7 +8,7 @@ LFLAGS="-L$LIBDIR"
 IFLAGS="-I$INCLUDEDIR"
 LIBS="-lm -lSDL3 -lSDL3_image -lSDL3_ttf"
 SRC="src/*.c"
-RPATH="-rpath $LIBDIR"
+RPATH="-rpath $LIBDIR" #comment and remove from the commands line if you re using another OS that isnt mac
 EXE="simpl3player"
 BUILDDIR="build/"
 
