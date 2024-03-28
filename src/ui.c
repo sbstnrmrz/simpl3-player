@@ -1,4 +1,5 @@
 #include "ui.h"
+#include "SDL3/SDL_image.h"
 #include "defs.h"
 
 box_t **box_arr = NULL;
@@ -283,13 +284,13 @@ void update_animations(SDL_Renderer *renderer) {
 }
 
 SDL_Texture *load_svg(SDL_Renderer *renderer, const char *svg_file) {
-    SDL_RWops *rw = SDL_RWFromFile(svg_file, "r");
-    if (rw == NULL) {
+    SDL_IOStream *f = SDL_IOFromFile(svg_file, "r");
+    if (f == NULL) {
         fprintf(stderr, "Error reading SVG file: %s\n", svg_file);
         exit(1);
     }
 
-    SDL_Surface *surface = IMG_LoadSVG_RW(rw);
+    SDL_Surface *surface = IMG_LoadSVG_IO(f);
     if (surface == NULL) {
         fprintf(stderr, "Error creating surface from SVG: %s. SDL_Error: %s\n", svg_file, SDL_GetError());
         exit(1);
@@ -301,7 +302,7 @@ SDL_Texture *load_svg(SDL_Renderer *renderer, const char *svg_file) {
         exit(1);
     }
 
-    SDL_RWclose(rw);
+    SDL_CloseIO(f);
     SDL_DestroySurface(surface);
 
     printf("Texture from SVG: %s. Created succesfully\n", svg_file);

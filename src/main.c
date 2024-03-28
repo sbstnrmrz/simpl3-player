@@ -222,60 +222,49 @@ int main(int argc, char *argv[]) {
     print_args(argc, argv);
     printf("parse_result: %d\n\n", parse);
 
-//    if (parse == PLAYBACK_WAV || parse == PLAYBACK_MP3 || parse == PLAYBACK_FLAC) {
-        printf("Playback mode selected\n");
+    printf("Playback mode selected\n");
 
-        ma_vars.decoder_config = ma_decoder_config_init(ma_format_f32, 2, 48000); 
-        ma_vars.device_config = ma_device_config_init(ma_device_type_playback);
-        ma_vars.device_config.dataCallback      = pb_callback;
-        ma_vars.device_config.pUserData         = &ma_vars;
-        ma_vars.device_config.sampleRate = 48000;
+    init_player(engine.renderer, &ma_vars);
 
-        if (argc > 1) {
-            if (check_directory(argv[1])) {
-                ma_vars.pb_info.playlist = create_playlist(argv[1]);
-            } else if (check_file_mp3(argv[1])){
-                add_mp3_to_playlist(engine.renderer, &ma_vars, new_mp3(argv[1]));
-                play_mp3(ma_vars.pb_info.playlist.curr_mp3, &ma_vars);
-            }
-        } else {
-            ma_vars.pb_info.playlist = (playlist_t) {
-                .name = "Playlist 1",
-                .dir = NULL,
-                .mp3_list_size = 0,
-                .mp3_list = NULL,
-                .curr_mp3 = 0,
-            };
-            ma_vars.pb_info.state |= PB_PAUSED;
+    ma_vars.decoder_config             = ma_decoder_config_init(ma_format_f32, 2, 48000); 
+    ma_vars.device_config              = ma_device_config_init(ma_device_type_playback);
+    ma_vars.device_config.dataCallback = pb_callback;
+    ma_vars.device_config.pUserData    = &ma_vars;
+    ma_vars.device_config.sampleRate   = SAMPLE_RATE;
 
+    if (argc > 1) {
+        if (check_directory(argv[1])) {
+            printf("DIRECTORY\n");
+            ma_vars.pb_info.playlist = create_playlist(argv[1]);
+        } else if (check_file_mp3(argv[1])) {
+            printf("MP3\n");
+            add_mp3_to_playlist(engine.renderer, &ma_vars, new_mp3(argv[1]));
+            printf("Added to playlist!\n");
+            play_mp3(ma_vars.pb_info.playlist.curr_mp3, &ma_vars);
         }
-//    }
+    } else {
+        printf("NO COMMAND ARG\n");
+        ma_vars.pb_info.playlist = (playlist_t) {
+            .name = "Playlist 1",
+            .dir = NULL,
+            .mp3_list_size = 0,
+            .mp3_list = NULL,
+            .curr_mp3 = 0,
+        };
+        ma_vars.pb_info.state |= PB_PAUSED;
 
-    switch (parse) {
-        case ERROR_NO_FILE:
-            fprintf(stderr, "No mp3 file or directory provided\n");
-            exit(1);
-            break;
-        case PRINT_HELP:
-            print_help();
-            exit(1);
-            break;
-        case PRINT_VERSION:
-            print_version();
-            exit(1);
-            break;
     }
 
     if (ma_context_init(NULL, 0, NULL, &ma_vars.context) != MA_SUCCESS) {
-        fprintf(stderr, "Failed to initialize context.\n");
+        fprintf(stderr, "Failed to initialize miniaudio context!\n");
         exit(1);
     }
     printf("Context initialized\n");
 
-    init_player(engine.renderer, &ma_vars);
+
 
     if (ma_device_init(NULL, &ma_vars.device_config, &ma_vars.device) != MA_SUCCESS) {
-        fprintf(stderr, "Failed to initialize device\n");
+        fprintf(stderr, "Failed to initialize device!\n");
         exit(1);
     }
     ma_device_set_master_volume(&ma_vars.device, 1);

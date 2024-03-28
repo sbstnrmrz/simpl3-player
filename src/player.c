@@ -1,5 +1,4 @@
 #include "player.h"
-#include "SDL3/SDL_image.h"
 #include "clock.h"
 #include "defs.h"
 #include "ui.h"
@@ -83,8 +82,6 @@ void pb_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint3
     (void)pInput;
 }
 
-
-
 void pause_pb(pb_state *state) {
     *state &= ~PB_PLAYING;
     *state |= PB_PAUSED;
@@ -107,7 +104,7 @@ void repos_buttons() {
     current_song_name->rect.x = progress_bar->rect.x;
     volume_bar.bar->rect.x    = (volume_bar.icon->rect.x + volume_bar.icon->rect.w) + 20;
     volume_bar.slider->rect.x = (volume_bar.bar->rect.x) - 8;
-
+    volume_bar.rect.x = volume_bar.bar->rect.x;
 }
 
 void open_sidebar() {
@@ -178,16 +175,15 @@ mp3_t new_mp3(const char *file_path) {
 
 void play_mp3(mp3_t mp3, ma_vars_t *ma_vars) {
     ma_result err = {0};
-    // CHECK CHECK CHECK
     pause_pb(&ma_vars->pb_info.state);
     ma_decoder_uninit(&ma_vars->decoder);
 
-    printf("dir: %s\n", mp3.dir);
     err = ma_decoder_init_file(mp3.dir, &ma_vars->decoder_config, &ma_vars->decoder); 
     if (err != MA_SUCCESS) {
         fprintf(stderr, "Failed to open '%s' mp3 file. MA_ERROR: %d\n", mp3.filename, err);
         exit(1);
     }
+    printf("Opened %s\n", mp3.dir);
 
     ma_vars->device_config.playback.format   = ma_vars->decoder.outputFormat;
     ma_vars->device_config.playback.channels = ma_vars->decoder.outputChannels;
@@ -245,6 +241,7 @@ playlist_t create_playlist(const char *dir_name) {
     DIR *dir = opendir(dir_name);
     if (dir == NULL) {
         fprintf(stderr, "Could not open directory: %s\n", dir_name);
+        exit(1);
     }
 
     de de = {0};
@@ -254,13 +251,10 @@ playlist_t create_playlist(const char *dir_name) {
         if (de->d_type == DT_REG) {
             if (check_file_mp3(de->d_name)) {
                 result.mp3_list = realloc(result.mp3_list, sizeof(mp3_t) * (result.mp3_list_size+1));
-//                strcpy(result.mp3_list[result.mp3_list_size].filename, de->d_name); 
                 char str[128] = {0};
                 strcpy(str, dir_name);
                 strcat(str, de->d_name);
                 result.mp3_list[result.mp3_list_size] = new_mp3(str);
-//                strcpy(result.mp3_list[result.mp3_list_size].dir, str);
-                
                 printf("result %zu: %s\n", result.mp3_list_size, result.mp3_list[result.mp3_list_size].filename);
                 result.mp3_list_size++;
             }
@@ -281,22 +275,18 @@ void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
             strlen(ma_vars->pb_info.playlist.mp3_list[sidebar_box_arr_size].filename)-4);
 
     sidebar_box_arr[sidebar_box_arr_size] = create_box(renderer, 
-                                  (SDL_FRect) {
-                                    .w = 200,//sidebar_box->rect.w,
-                                    .h = sidebar_rect.h,
-                                    .x = 0,
-                                    .y = (sidebar_rect.y + sidebar_rect.h + sidebar_rect.y) + (sidebar_box_arr_size * sidebar_rect.h),
-//                                  .x = 0,
-//                                  .y = 0,
-//                                  .w = 0,
-//                                  .h = 0,
-                                  },
-                                    WHITE, 
-                                    NULL, 
-                                    file,//test_pl.mp3_list[i].filename, 
-                                    WHITE, 
-                                    NULL, 
-                                    BOX_BORDER);
+                                                      (SDL_FRect) {
+                                                        .w = 200,
+                                                        .h = sidebar_rect.h,
+                                                        .x = 0,
+                                                        .y = (sidebar_rect.y + sidebar_rect.h + sidebar_rect.y) + (sidebar_box_arr_size * sidebar_rect.h),
+                                                      },
+                                                        WHITE, 
+                                                        NULL, 
+                                                        file,//test_pl.mp3_list[i].filename, 
+                                                        WHITE, 
+                                                        NULL, 
+                                                        BOX_BORDER);
     if (sidebar_open) {
          sidebar_box_arr[sidebar_box_arr_size]->state |= BOX_VISIBLE;   
     }
@@ -304,13 +294,13 @@ void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
 }
 
 void add_mp3_to_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const mp3_t mp3) {
-    ma_vars->pb_info.playlist.mp3_list = realloc(ma_vars->pb_info.playlist.mp3_list, sizeof(mp3_t) * (ma_vars->pb_info.playlist.mp3_list_size+1));
+    ma_vars->pb_info.playlist.mp3_list = realloc(ma_vars->pb_info.playlist.mp3_list, 
+                                                 sizeof(mp3_t) * (ma_vars->pb_info.playlist.mp3_list_size+1));
     ma_vars->pb_info.playlist.mp3_list[ma_vars->pb_info.playlist.mp3_list_size] = mp3; 
     ma_vars->pb_info.playlist.curr_mp3_ind = ma_vars->pb_info.playlist.mp3_list_size; 
     ma_vars->pb_info.playlist.curr_mp3 = mp3;
     ma_vars->pb_info.playlist.mp3_list_size++;
     new_sidebar_item(renderer, ma_vars);
-
 }
 
 void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
@@ -326,10 +316,10 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
     button_textures[BUTTON_VOLUME] = IMG_LoadTexture(renderer, "assets/buttons/volume.png");
 
     sidebar_rect = (SDL_FRect) {
-                        .w = 32, 
-                        .h = 32, 
-                        .x = 8, 
-                        .y = 8, 
+                       .w = 32, 
+                       .h = 32, 
+                       .x = 8, 
+                       .y = 8, 
     }; 
 
     sidebar_box = create_box(renderer, 
@@ -643,7 +633,7 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
 
         static f32 vol = 0; 
         static f32 last_vol = 0;
-        printf("VOL: %0.f | LASTVOL: %0.f\n", vol*100, last_vol*100);
+//        printf("VOL: %0.f | LASTVOL: %0.f\n", vol*100, last_vol*100);
 
         ma_device_get_master_volume(&ma_vars->device, &vol); 
         if (vol > 0) {
