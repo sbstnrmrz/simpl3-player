@@ -307,22 +307,21 @@ playlist_t create_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const cha
 
 void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars, mp3_t mp3) {
     sidebar_box_arr = realloc(sidebar_box_arr, sizeof(box_t*) * (sidebar_box_arr_size+1));
-    char file[128] = {0};
-    strcpy(file, mp3.filename);
 
-    sidebar_box_arr[sidebar_box_arr_size] = create_box(renderer, 
-                                                      (SDL_FRect) {
-                                                        .w = 200,
-                                                        .h = sidebar_rect.h,
-                                                        .x = 0,
-                                                        .y = (sidebar_rect.y + sidebar_rect.h + sidebar_rect.y) + (sidebar_box_arr_size * sidebar_rect.h),
-                                                      },
-                                                        WHITE, 
-                                                        NULL, 
-                                                        file,//test_pl.mp3_list[i].filename, 
-                                                        WHITE, 
-                                                        NULL, 
-                                                        BOX_BORDER);
+    sidebar_box_arr[sidebar_box_arr_size] = create_box(
+        renderer, 
+        (SDL_FRect) {
+            .w = 200,
+            .h = sidebar_rect.h,
+            .x = 0,
+            .y = (sidebar_rect.y + sidebar_rect.h + sidebar_rect.y) + (sidebar_box_arr_size * sidebar_rect.h),
+        },
+        WHITE, 
+        NULL, 
+        mp3.filename, 
+        WHITE, 
+        NULL, 
+        BOX_BORDER);
     if (sidebar_open) {
          sidebar_box_arr[sidebar_box_arr_size]->state |= BOX_VISIBLE;   
     }
@@ -332,8 +331,9 @@ void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars, mp3_t mp3) {
 }
 
 void add_mp3_to_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const mp3_t mp3) {
-    ma_vars->pb_info.playlist.mp3_list = realloc(ma_vars->pb_info.playlist.mp3_list, 
-                                                 sizeof(mp3_t) * (ma_vars->pb_info.playlist.mp3_list_size+1));
+    ma_vars->pb_info.playlist.mp3_list = realloc(
+        ma_vars->pb_info.playlist.mp3_list, 
+        sizeof(mp3_t) * (ma_vars->pb_info.playlist.mp3_list_size+1));
     ma_vars->pb_info.playlist.mp3_list[ma_vars->pb_info.playlist.mp3_list_size] = mp3; 
     ma_vars->pb_info.playlist.curr_mp3_ind = ma_vars->pb_info.playlist.mp3_list_size; 
     ma_vars->pb_info.playlist.curr_mp3 = mp3;
@@ -357,50 +357,53 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                        .w = 32, 
                        .h = 32, 
                        .x = 8, 
-                       .y = 8, 
+                       .y = 8,
     }; 
 
-    sidebar_box = create_box(renderer, 
-                              (SDL_FRect) {
-                                    .x = 0,
-                                    .y = 0,
-                                    .w = 200,
-                                    .h = WIN_HEIGHT, 
-                              },
-                              WHITE,
-                              NULL,
-                              NULL,
-                              WHITE,
-                              NULL,
-                              BOX_BORDER); 
+    sidebar_box = create_box(
+        renderer, 
+        (SDL_FRect) {
+            .x = 0,
+            .y = 0,
+            .w = 200,
+            .h = WIN_HEIGHT, 
+        },
+        WHITE,
+        NULL,
+        NULL,
+        WHITE,
+        NULL,
+        BOX_BORDER); 
 
-    progress_bar = create_box(renderer, 
-                              (SDL_FRect) {
-                                    .x = ((f32)WIN_WIDTH/2) - progress_bar_w/2,
-                                    .y = ((f32)WIN_HEIGHT/2),
-                                    .w = progress_bar_w,
-                                    .h = 10, 
-                              },
-                              WHITE,
-                              NULL,
-                              NULL,
-                              WHITE,
-                              NULL,
-                              BOX_VISIBLE | BOX_COLOR_FILL); 
+    progress_bar = create_box(
+        renderer, 
+        (SDL_FRect) {
+            .x = ((f32)WIN_WIDTH/2) - progress_bar_w/2,
+            .y = ((f32)WIN_HEIGHT/2),
+            .w = progress_bar_w,
+            .h = 10, 
+        },
+        WHITE,
+        NULL,
+        NULL,
+        WHITE,
+        NULL,
+        BOX_VISIBLE | BOX_COLOR_FILL); 
 
-    time_left_box = create_box(renderer, 
-                              (SDL_FRect) {
-                                .w = 60,
-                                .h = 32,
-                                .x = (progress_bar->rect.x - 60) - 32,
-                                .y = (progress_bar->rect.y + progress_bar->rect.h/2) - 32/2,
-                              },
-                              WHITE,
-                              NULL,
-                              "00:00",
-                              WHITE,
-                              NULL,
-                              BOX_VISIBLE); 
+    time_left_box = create_box(
+        renderer, 
+        (SDL_FRect) {
+            .w = 60,
+            .h = 32,
+            .x = (progress_bar->rect.x - 60) - 32,
+            .y = (progress_bar->rect.y + progress_bar->rect.h/2) - 32/2,
+        },
+        WHITE,
+        NULL,
+        "00:00",
+        WHITE,
+        NULL,
+        BOX_VISIBLE); 
 
     total_time_box = create_box(renderer, 
                               (SDL_FRect) {
@@ -727,16 +730,32 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
     }
 
     if (event.type == SDL_EVENT_DROP_FILE) {
-        char *file = event.drop.data;
+        char file[128] = {0};
+        strcat(file, event.drop.data);
         printf("Dropped: %s\n", file);
         if (check_file_mp3(file)) {
             add_mp3_to_playlist(renderer, ma_vars, new_mp3(file));
             play_mp3(ma_vars->pb_info.playlist.curr_mp3, ma_vars);
         } else if (check_directory(file)) {
-            strcat(file , "/");
-            //CHECKCHECKCHECK
-//          ma_vars->pb_info.playlist = create_playlist(file);
-//          play_mp3(ma_vars->playlist.mp3_list[0], ma_vars);
+            if (*(file + (strlen(file)-1)) != '/') {
+                strcat(file, "/");
+            }
+            if (ma_vars->pb_info.playlist.mp3_list_size > 0) {
+                pause_pb(&ma_vars->pb_info.state);
+                for (size_t i = 0; i < ma_vars->pb_info.playlist.mp3_list_size; i++) {
+                    free(&ma_vars->pb_info.playlist.mp3_list[i]);
+                    free(sidebar_box_arr[i]);
+                }
+                free(ma_vars->pb_info.playlist.mp3_list);
+                ma_vars->pb_info.playlist.mp3_list = NULL;
+                free(sidebar_box_arr);
+                sidebar_box_arr = NULL;
+                ma_vars->pb_info.playlist.mp3_list_size = 0;
+                ma_vars->pb_info.playlist.curr_mp3_ind = 0;
+                sidebar_box_arr_size = 0;
+            }
+            ma_vars->pb_info.playlist = create_playlist(renderer, ma_vars, file);
+            play_mp3(ma_vars->pb_info.playlist.mp3_list[ma_vars->pb_info.playlist.curr_mp3_ind], ma_vars);
         }
     }
 }
