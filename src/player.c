@@ -297,6 +297,7 @@ playlist_t create_playlist(SDL_Renderer *renderer, ma_vars_t *ma_vars, const cha
     closedir(dir);
 
     for (size_t i = 0; i < result.mp3_list_size; i++) {
+        printf("malloced: %p\n", &result.mp3_list[i]);
         new_sidebar_item(renderer, ma_vars, result.mp3_list[i]);
     }
     result.curr_mp3_ind = 0;
@@ -742,8 +743,12 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
             }
             if (ma_vars->pb_info.playlist.mp3_list_size > 0) {
                 pause_pb(&ma_vars->pb_info.state);
-                for (size_t i = 0; i < ma_vars->pb_info.playlist.mp3_list_size; i++) {
+                printf("mp3 list size: %zu\n", ma_vars->pb_info.playlist.mp3_list_size);
+                for (size_t i = ma_vars->pb_info.playlist.mp3_list_size-1; i <= 0; i--) {
                     free(&ma_vars->pb_info.playlist.mp3_list[i]);
+                    printf("freed mp3 %zu\n", i);
+                }
+                for (size_t i = sidebar_box_arr_size-1; i <= 0; i--) {
                     free(sidebar_box_arr[i]);
                 }
                 free(ma_vars->pb_info.playlist.mp3_list);
