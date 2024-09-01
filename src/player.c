@@ -3,13 +3,6 @@
 #include "defs.h"
 #include "ui.h"
 
-f32   *inSamples = NULL;
-f32   *out = NULL;
-f32   *in = NULL;
-cmplx *fft_out = NULL;
-cmplx *fft_out_woz = NULL;
-size_t frames_size = 0;
-
 box_t *prev_song_button = NULL;
 box_t *next_song_button = NULL;
 box_t *total_time_box = NULL;
@@ -54,31 +47,10 @@ void pb_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint3
     ma_vars_t *ma_vars = (ma_vars_t*)pDevice->pUserData;
     if (ma_vars->pb_info.state & PB_PLAYING) {
         err = ma_decoder_read_pcm_frames(&ma_vars->decoder, pOutput, frameCount, NULL);
-
-//      if (err == MA_AT_END) {
-//          if (ma_vars->pb_state & PB_LOOPING) {
-//              ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, 0);
-//          }
-//          if (ma_vars->pb_state & PB_ONCE) {
-//              printf("Playback has finished!\n"); 
-//              exit(1);
-//          }
-//      }
-//      else if (err != MA_SUCCESS) {
-//          fprintf(stderr, "An error has ocurred. ma_result: %d\n", err);
-//          exit(1);
-//      }
-
-//      out = (f32*)pOutput;
-//      fft_out = (cmplx*)malloc(sizeof(cmplx) * frameCount);
-//      fft(out, 1, fft_out, frameCount);
         ma_decoder_get_cursor_in_pcm_frames(&ma_vars->decoder, &ma_vars->pb_info.cursor);
     } else if (ma_vars->pb_info.state & PB_PAUSED) {
 
     }
-
-//    frames_size = frameCount;
-
     (void)pInput;
 }
 
@@ -406,19 +378,20 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
         NULL,
         BOX_VISIBLE); 
 
-    total_time_box = create_box(renderer, 
-                              (SDL_FRect) {
-                                .w = 60,
-                                .h = 32,
-                                .x = (progress_bar->rect.x + progress_bar->rect.w) + 32,
-                                .y = (progress_bar->rect.y + progress_bar->rect.h/2) - 32/2,
-                              },
-                              WHITE,
-                              NULL,
-                              "00:00",
-                              WHITE,
-                              NULL,
-                              BOX_VISIBLE); 
+    total_time_box = create_box(
+        renderer, 
+        (SDL_FRect) {
+            .w = 60,
+            .h = 32,
+            .x = (progress_bar->rect.x + progress_bar->rect.w) + 32,
+            .y = (progress_bar->rect.y + progress_bar->rect.h/2) - 32/2,
+        },
+        WHITE,
+        NULL,
+        "00:00",
+        WHITE,
+        NULL,
+        BOX_VISIBLE); 
 
     play_button = create_box(renderer, 
                              (SDL_FRect) {
@@ -556,14 +529,7 @@ void init_player(SDL_Renderer *renderer, ma_vars_t *ma_vars) {
                                    NULL,
                                    BOX_VISIBLE);
 
-//  if (ma_vars->pb_info.playlist.mp3_list_size > 0) {
-//      for (size_t i = 0; i < ma_vars->pb_info.playlist.mp3_list_size; i++) {
-//          new_sidebar_item(renderer, ma_vars);
-//      }
-//      play_mp3(ma_vars->pb_info.playlist.curr_mp3, ma_vars);
-//  }
     ma_vars->pb_info.state |= PB_ONCE;
-
 }
 
 void update_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
@@ -585,15 +551,38 @@ void update_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
     } else {
         SDL_SetTextureColorMod(button_textures[BUTTON_SIDEBAR], 255, 255, 255);
     }
-
-}
-
-void render_sidebar(SDL_Renderer *renderer, mouse_t mouse) {
-    SDL_RenderTexture(renderer, button_textures[BUTTON_SIDEBAR], NULL, &sidebar_rect);
-
 }
 
 void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mouse_t mouse) {
+    if (err == MA_AT_END) {
+        if (ma_vars->pb_info.state & PB_LOOPING) {
+            pause_pb(&ma_vars->pb_info.state);
+            ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, 0);
+            unpause_pb(&ma_vars->pb_info.state);
+        }
+        if (ma_vars->pb_info.state & PB_ONCE) {
+            if (ma_vars->pb_info.playlist.mp3_list_size > 1) {
+                printf("WTF\n");
+                next_song(ma_vars);
+            } else {
+                printf("Playback has finished!\n"); 
+                exit(1);
+            }
+        }
+        if (ma_vars->pb_info.state & PB_SHUFFLE) {
+            size_t ran = rand()%ma_vars->pb_info.playlist.mp3_list_size;
+            ma_vars->pb_info.playlist.curr_mp3_ind = ran;
+            ma_vars->pb_info.playlist.curr_mp3 = ma_vars->pb_info.playlist.mp3_list[ran];
+
+            pause_pb(&ma_vars->pb_info.state);
+            play_mp3(ma_vars->pb_info.playlist.curr_mp3, ma_vars);
+            unpause_pb(&ma_vars->pb_info.state);
+        }
+    } else if (err != MA_SUCCESS) {
+        fprintf(stderr, "An error has ocurred. ma_result: %d\n", err);
+        exit(1);
+    }
+
     if (ma_vars->pb_info.playlist.mp3_list_size > 0) {
         f32 sec = ((f32)ma_vars->pb_info.cursor/SAMPLE_RATE);
         if (event.type == SDL_EVENT_KEY_DOWN) {
@@ -631,35 +620,6 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
             }
         } else if (event.type == SDL_EVENT_KEY_UP) {
 
-
-        }
-
-        if (err == MA_AT_END) {
-            if (ma_vars->pb_info.state & PB_LOOPING) {
-                pause_pb(&ma_vars->pb_info.state);
-                ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, 0);
-                unpause_pb(&ma_vars->pb_info.state);
-            }
-            if (ma_vars->pb_info.state & PB_ONCE) {
-                if (ma_vars->pb_info.playlist.mp3_list_size > 1) {
-                    next_song(ma_vars);
-                } else {
-                    printf("Playback has finished!\n"); 
-                    exit(1);
-                }
-            }
-            if (ma_vars->pb_info.state & PB_SHUFFLE) {
-                size_t ran = rand()%ma_vars->pb_info.playlist.mp3_list_size;
-                ma_vars->pb_info.playlist.curr_mp3_ind = ran;
-                ma_vars->pb_info.playlist.curr_mp3 = ma_vars->pb_info.playlist.mp3_list[ran];
-
-                pause_pb(&ma_vars->pb_info.state);
-                play_mp3(ma_vars->pb_info.playlist.curr_mp3, ma_vars);
-                unpause_pb(&ma_vars->pb_info.state);
-            }
-        } else if (err != MA_SUCCESS) {
-            fprintf(stderr, "An error has ocurred. ma_result: %d\n", err);
-            exit(1);
         }
 
         for (size_t i = 0; i < sidebar_box_arr_size; i++) {
@@ -875,8 +835,7 @@ void render_pb(SDL_Renderer *renderer, mouse_t mouse, ma_vars_t *ma_vars) {
     } else {
         SDL_SetTextureColorMod(play_button->texture, 255, 255, 255);
     }
-//  SDL_RenderRect(renderer, &volume_bar.rect);
-
+    SDL_RenderTexture(renderer, button_textures[BUTTON_SIDEBAR], NULL, &sidebar_rect);
 }
 
 void print_playlist(playlist_t playlist) {

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CC="cc"
+CC="clang"
 CCFLAGS="-Wall -Wextra"
 LIBDIR="/usr/local/lib"
 INCLUDEDIR="/usr/local/include"
@@ -8,7 +8,7 @@ LFLAGS="-L$LIBDIR"
 IFLAGS="-I$INCLUDEDIR"
 LIBS="-lm -lSDL3 -lSDL3_image -lSDL3_ttf"
 SRC="src/*.c"
-RPATH="-rpath $LIBDIR" #comment and remove from the commands line if you re using another OS that isnt mac
+RPATH="-rpath $LIBDIR" 
 EXE="simpl3player"
 BUILDDIR="build/"
 
@@ -17,10 +17,12 @@ if [ `uname` = "Linux" ]; then
     BUILDDIR+="linux/"
 elif [ `uname` = "Darwin" ]; then
     BUILDDIR+="mac/"
+    LIBS+=' '$RPATH
 fi
 
 rm -r $BUILDDIR
 mkdir -p $BUILDDIR
 cp -r assets $BUILDDIR
+cp $LIBDIR/libSDL3.1.0.0.dylib $LIBDIR/libSDL3_image.1.0.0.dylib $LIBDIR/libSDL3_ttf.1.0.0.dylib $BUILDDIR
 
-$CC $CCFLAGS $SRC -o $BUILDDIR$EXE $IFLAGS $LFLAGS $LIBS $RPATH
+$CC $CCFLAGS $SRC -o $BUILDDIR$EXE $IFLAGS $LFLAGS $LIBS

@@ -76,14 +76,12 @@ typedef enum {
 } pb_state;
 
 typedef enum {
-    ERROR_NO_FILE = -3,
-    ERROR_NO_COMMAND = -2,
+    NO_FILE = -3,
+    ERROR_NO_ARGS = -2,
     ERROR_FILETYPE = -1,
     PLAYBACK_WAV = 1,
     PLAYBACK_MP3,
     PLAYBACK_FLAC,
-    PRINT_HELP,
-    PRINT_VERSION
 } parse_result;
 
 typedef struct {
@@ -107,6 +105,7 @@ typedef struct {
 typedef struct {
     playlist_t playlist;
     u64 cursor;
+    f32 volume;
     pb_state state;
 } pb_info_t;
 

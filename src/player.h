@@ -12,7 +12,6 @@ void new_sidebar_item(SDL_Renderer *renderer, ma_vars_t *ma_vars, mp3_t mp3);
 void open_sidebar();
 void close_sidebar();
 void update_sidebar(SDL_Renderer *renderer, mouse_t mouse);
-void render_sidebar(SDL_Renderer *renderer, mouse_t mouse);
 void open_volume();
 void close_volume();
 

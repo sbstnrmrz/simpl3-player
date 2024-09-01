@@ -23,17 +23,6 @@ void print_args(int argc, char *argv[]) {
 
 }
 
-void print_help() {
-    printf("-p [file]\tStarts the program with miniaudio playback mode. Formats supported: WAV, MP3 and FLAC\n");
-    printf("-r [file]\tStarts the program with miniaudio capture mode, saves the record with the name specified in [file], if name is not specified, the file will have a default name. Formats supported: WAV\n");
-
-}
-
-void print_version() {
-    printf("Version: %s\n", VERSION);
-
-}
-
 void print_pb_file_info(const char *filename, u64 total_frames, u8 channels, u32 sample_rate) {
     char *str = channels < 2 ? "Mono" : "Stereo";
     printf("Playback file info:\n");
@@ -46,8 +35,8 @@ void print_pb_file_info(const char *filename, u64 total_frames, u8 channels, u32
 }
 
 int parse_args(int argc, char *argv[]) {
-    if (argc < 1) {
-        return ERROR_NO_COMMAND;
+    if (argc < 2) {
+        return NO_FILE;
     } else if (argc > 2) {
         fprintf(stderr, "Only two commands can be used\n");
         exit(1);
@@ -59,7 +48,7 @@ int parse_args(int argc, char *argv[]) {
         return PLAYBACK_MP3;
     }
  
-    return ERROR_NO_COMMAND;
+    return ERROR_NO_ARGS;
 }
 
 void print_devices(ma_context *context) {
@@ -99,18 +88,21 @@ void init_sdl(const char *title, int win_width, int win_height, u32 flags) {
         fprintf(stderr, "Failed to initialize SDL. SDL_Error: %s\n", SDL_GetError());
         exit(1);
     }
+    printf("SDL initialized\n");
 
     engine.window = SDL_CreateWindow(title, win_width, win_height, 0);
     if (engine.window == NULL) {
         fprintf(stderr, "Failed to create SDL_Window. SDL_Error: %s\n", SDL_GetError());
         exit(1);
     }
+    printf("SDL_Window created\n");
 
     engine.renderer = SDL_CreateRenderer(engine.window, NULL, SDL_RENDERER_PRESENTVSYNC);
     if (engine.renderer == NULL) {
         fprintf(stderr, "Failed to create SDL_Renderer. SDL_Error: %s\n", SDL_GetError());
         exit(1);
     }
+    printf("SDL_Renderer created\n");
 
     if (TTF_Init() < 0) {
         fprintf(stderr, "Failed to initialize TTF. SDL_Error: %s\n", SDL_GetError());
@@ -138,13 +130,8 @@ void update() {
 void render() {
     SDL_SetRenderDrawColor(engine.renderer, BLACK.r, BLACK.g, BLACK.b, BLACK.a);
     SDL_RenderClear(engine.renderer);
- 
-    if (ma_vars.pb_info.state == PB_PLAYING) {
-
-    }
 
     render_box_arr(engine.renderer);
-    render_sidebar(engine.renderer, engine.mouse);
     render_pb(engine.renderer, engine.mouse, &ma_vars);
 
     SDL_RenderPresent(engine.renderer);
@@ -174,13 +161,13 @@ void debug() {
 
 int main(int argc, char *argv[]) {
     srand(time(NULL));
-    init_sdl("siMPl3 PLAYER", WIN_WIDTH, WIN_HEIGHT, 0);
-    int parse = PLAYBACK_MP3;//parse_args(argc, argv); 
-
     print_args(argc, argv);
+    init_sdl("siMPl3 PLAYER", WIN_WIDTH, WIN_HEIGHT, 0);
+    int parse = parse_args(argc, argv); 
+
+
     printf("parse_result: %d\n\n", parse);
 
-    printf("Playback mode selected\n");
     init_player(engine.renderer, &ma_vars);
 
     ma_vars.decoder_config             = ma_decoder_config_init(ma_format_f32, 2, 48000); 
