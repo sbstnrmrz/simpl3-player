@@ -23,6 +23,6 @@ fi
 rm -r $BUILDDIR
 mkdir -p $BUILDDIR
 cp -r assets $BUILDDIR
-cp $LIBDIR/libSDL3.1.0.0.dylib $LIBDIR/libSDL3_image.1.0.0.dylib $LIBDIR/libSDL3_ttf.1.0.0.dylib $BUILDDIR
+cp $LIBDIR/libSDL3.0.dylib $LIBDIR/libSDL3_image.0.dylib $LIBDIR/libSDL3_ttf.0.dylib $BUILDDIR
 
 $CC $CCFLAGS $SRC -o $BUILDDIR$EXE $IFLAGS $LFLAGS $LIBS

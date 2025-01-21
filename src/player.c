@@ -586,7 +586,7 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
     if (ma_vars->pb_info.playlist.mp3_list_size > 0) {
         f32 sec = ((f32)ma_vars->pb_info.cursor/SAMPLE_RATE);
         if (event.type == SDL_EVENT_KEY_DOWN) {
-            if (event.key.keysym.sym == SDLK_SPACE) {
+            if (event.key.key == SDLK_SPACE) {
                 if (ma_vars->pb_info.state & PB_PLAYING) {
                     pause_pb(&ma_vars->pb_info.state);
                 } else {
@@ -594,7 +594,7 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
                 }
             }
             // CHECK CHECK CHECK CHECK CHECK
-            if (event.key.keysym.sym == SDLK_RIGHT) {
+            if (event.key.key == SDLK_RIGHT) {
                 pause_pb(&ma_vars->pb_info.state);
                 i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.playlist.curr_mp3.sample_rate);
                 if (t+5 >= (i32)(ma_vars->pb_info.playlist.curr_mp3.frames/ma_vars->pb_info.playlist.curr_mp3.sample_rate)) {
@@ -606,7 +606,7 @@ void update_pb(SDL_Event event, SDL_Renderer *renderer, ma_vars_t *ma_vars, mous
                 ma_decoder_seek_to_pcm_frame(&ma_vars->decoder, ma_vars->pb_info.cursor);
                 unpause_pb(&ma_vars->pb_info.state);
             }
-            if (event.key.keysym.sym == SDLK_LEFT) {
+            if (event.key.key == SDLK_LEFT) {
                 pause_pb(&ma_vars->pb_info.state);
                 i32 t = (ma_vars->pb_info.cursor/ma_vars->pb_info.playlist.curr_mp3.sample_rate);
                 if (t-5 <= 0) {

@@ -178,7 +178,7 @@ bool mouse_pressed(mouse_t mouse) {
 }
 
 SDL_Texture *create_font_texture(SDL_Renderer *renderer, TTF_Font* font, const char* text, SDL_Color text_color) {
-    SDL_Surface *surface = TTF_RenderText_Solid(font, text, text_color);
+    SDL_Surface *surface = TTF_RenderText_Solid(font, text, strlen(text), text_color);
     if (surface == NULL) {
         fprintf(stderr, "Error creating surface from font. SDL_Error: %s\n", SDL_GetError());
         exit(1);
@@ -200,7 +200,7 @@ SDL_Texture *__new_font_texture(SDL_Renderer *renderer, box_t *box, TTF_Font *fo
         box->font_texture = NULL;
     }
 
-    SDL_Surface *surface = TTF_RenderText_Solid(font, text, text_color);
+    SDL_Surface *surface = TTF_RenderText_Solid(font, text, strlen(text), text_color);
     if (surface == NULL) {
         fprintf(stderr, "Error creating surface from font. SDL_Error: %s\n", SDL_GetError());
         exit(1);
@@ -225,7 +225,7 @@ void _new_font_texture(SDL_Renderer *renderer, box_t *box, TTF_Font *font, const
         box->font_texture = NULL;
     }
 
-    SDL_Surface *surface = TTF_RenderText_Solid(font, new_text, box->text_color);
+    SDL_Surface *surface = TTF_RenderText_Solid(font, new_text, strlen(new_text), box->text_color);
     if (surface == NULL) {
         fprintf(stderr, "Error creating surface from font. SDL_Error: %s\n", SDL_GetError());
         exit(1);
